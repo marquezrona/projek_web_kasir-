@@ -7,73 +7,97 @@ use Illuminate\Http\Request;
 
 class ProductController extends Controller
 {
+    /**
+     * Menampilkan semua product.
+     */
     public function index()
     {
-        $products = Product::all();
+        $products = Product::latest()->paginate(10);
 
         return view('products.index', compact('products'));
     }
 
+    /**
+     * Menampilkan form tambah product.
+     */
     public function create()
     {
         return view('products.create');
     }
 
+    /**
+     * Menyimpan product baru.
+     */
     public function store(Request $request)
     {
-        $request->validate([
-            'name' => 'required',
-            'price' => 'required|numeric',
-            'stock' => 'required|integer',
+        $validated = $request->validate([
+            'name'        => 'required|string|max:255',
+            'category'    => 'nullable|string|max:100',
+            'description' => 'nullable|string',
+            'price'       => 'required|numeric|min:0',
+            'stock'       => 'required|integer|min:0',
+            'image'       => 'nullable|string|max:255',
+            'is_active'   => 'nullable|boolean',
         ]);
 
-        Product::create([
-            'name' => $request->name,
-            'price' => $request->price,
-            'stock' => $request->stock,
-        ]);
+        $validated['is_active'] = $request->has('is_active');
 
-        return redirect()->route('products.index');
+        Product::create($validated);
+
+        return redirect()
+            ->route('products.index')
+            ->with('success', 'Product berhasil ditambahkan.');
     }
 
-    public function show(string $id)
+    /**
+     * Menampilkan detail product.
+     */
+    public function show(Product $product)
     {
-        $product = Product::findOrFail($id);
-
         return view('products.show', compact('product'));
     }
 
-    public function edit(string $id)
+    /**
+     * Menampilkan form edit.
+     */
+    public function edit(Product $product)
     {
-        $product = Product::findOrFail($id);
-
         return view('products.edit', compact('product'));
     }
 
-    public function update(Request $request, string $id)
+    /**
+     * Mengupdate product.
+     */
+    public function update(Request $request, Product $product)
     {
-        $request->validate([
-            'name' => 'required',
-            'price' => 'required|numeric',
-            'stock' => 'required|integer',
+        $validated = $request->validate([
+            'name'        => 'required|string|max:255',
+            'category'    => 'nullable|string|max:100',
+            'description' => 'nullable|string',
+            'price'       => 'required|numeric|min:0',
+            'stock'       => 'required|integer|min:0',
+            'image'       => 'nullable|string|max:255',
+            'is_active'   => 'nullable|boolean',
         ]);
 
-        $product = Product::findOrFail($id);
+        $validated['is_active'] = $request->has('is_active');
 
-        $product->update([
-            'name' => $request->name,
-            'price' => $request->price,
-            'stock' => $request->stock,
-        ]);
+        $product->update($validated);
 
-        return redirect()->route('products.index');
+        return redirect()
+            ->route('products.index')
+            ->with('success', 'Product berhasil diperbarui.');
     }
 
-    public function destroy(string $id)
+    /**
+     * Menghapus product.
+     */
+    public function destroy(Product $product)
     {
-        $product = Product::findOrFail($id);
         $product->delete();
 
-        return redirect()->route('products.index');
+        return redirect()
+            ->route('products.index')
+            ->with('success', 'Product berhasil dihapus.');
     }
 }
