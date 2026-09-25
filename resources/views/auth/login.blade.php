@@ -1,47 +1,236 @@
-<x-guest-layout>
-    <!-- Session Status -->
-    <x-auth-session-status class="mb-4" :status="session('status')" />
+<!DOCTYPE html>
+        <html lang="id">
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <meta name="csrf-token" content="{{ csrf_token() }}">
+            <title>Login Kasir - Toko Sembako Jazzel</title>
+            <link rel="stylesheet" href="{{ asset('assets/vendor/bootstrap-icons/bootstrap-icons.css') }}">
+            <style>
+                :root {
+                    --ink: #17212b;
+                    --muted: #66727e;
+                    --teal: #07536a;
+                    --teal-dark: #053e51;
+                    --line: rgba(255, 255, 255, .58);
+                }
 
-    <form method="POST" action="{{ route('login') }}">
-        @csrf
+                * { box-sizing: border-box; }
 
-        <!-- Email Address -->
-        <div>
-            <x-input-label for="email" :value="__('Email')" />
-            <x-text-input id="email" class="block mt-1 w-full" type="email" name="email" :value="old('email')" required autofocus autocomplete="username" />
-            <x-input-error :messages="$errors->get('email')" class="mt-2" />
-        </div>
+                html, body { min-height: 100%; }
 
-        <!-- Password -->
-        <div class="mt-4">
-            <x-input-label for="password" :value="__('Password')" />
+                body {
+                    margin: 0;
+                    color: var(--ink);
+                    font-family: "Segoe UI", Tahoma, sans-serif;
+                    background: #d9d5cc;
+                }
 
-            <x-text-input id="password" class="block mt-1 w-full"
-                            type="password"
-                            name="password"
-                            required autocomplete="current-password" />
+                .login-page {
+                    min-height: 100vh;
+                    position: relative;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    overflow: hidden;
+                    padding: 90px 24px 72px;
+                    background-image:
+                        linear-gradient(90deg, rgba(9, 30, 39, .45), rgba(13, 28, 35, .16) 48%, rgba(9, 25, 30, .4)),
+                        url('https://images.unsplash.com/photo-1604719312566-8912e9227c6a?auto=format&fit=crop&w=2200&q=85');
+                    background-size: cover;
+                    background-position: center;
+                }
 
-            <x-input-error :messages="$errors->get('password')" class="mt-2" />
-        </div>
+                .login-page::before {
+                    content: "";
+                    position: absolute;
+                    inset: 0;
+                    background: rgba(255, 255, 255, .08);
+                    backdrop-filter: blur(1.5px);
+                }
 
-        <!-- Remember Me -->
-        <div class="block mt-4">
-            <label for="remember_me" class="inline-flex items-center">
-                <input id="remember_me" type="checkbox" class="rounded dark:bg-gray-900 border-gray-300 dark:border-gray-700 text-indigo-600 shadow-sm focus:ring-indigo-500 dark:focus:ring-indigo-600 dark:focus:ring-offset-gray-800" name="remember">
-                <span class="ms-2 text-sm text-gray-600 dark:text-gray-400">{{ __('Remember me') }}</span>
-            </label>
-        </div>
+                .brand {
+                    position: absolute;
+                    z-index: 2;
+                    top: 27px;
+                    left: 28px;
+                    display: flex;
+                    align-items: center;
+                    gap: 10px;
+                    color: #fff;
+                    text-shadow: 0 1px 8px rgba(0, 0, 0, .35);
+                }
 
-        <div class="flex items-center justify-end mt-4">
-            @if (Route::has('password.request'))
-                <a class="underline text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 dark:focus:ring-offset-gray-800" href="{{ route('password.request') }}">
-                    {{ __('Forgot your password?') }}
-                </a>
-            @endif
+                .brand-icon {
+                    font-size: 31px;
+                    line-height: 1;
+                }
 
-            <x-primary-button class="ms-3">
-                {{ __('Log in') }}
-            </x-primary-button>
-        </div>
-    </form>
-</x-guest-layout>
+                .brand-name {
+                    font-size: 18px;
+                    font-weight: 800;
+                    letter-spacing: .02em;
+                }
+
+                .flag {
+                    width: 25px;
+                    height: 17px;
+                    display: inline-block;
+                    margin-left: 3px;
+                    vertical-align: -2px;
+                    border-radius: 1px;
+                    background: linear-gradient(#e72b35 0 50%, #fff 50%);
+                    box-shadow: 0 0 0 1px rgba(0, 0, 0, .2);
+                }
+
+                .login-card {
+                    position: relative;
+                    z-index: 1;
+                    width: min(100%, 400px);
+                    padding: 22px 19px 19px;
+                    border: 1px solid rgba(255, 255, 255, .62);
+                    border-radius: 14px;
+                    background: rgba(243, 244, 240, .7);
+                    box-shadow: 0 18px 45px rgba(0, 0, 0, .24);
+                    backdrop-filter: blur(15px);
+                }
+
+                .login-heading { text-align: center; margin-bottom: 17px; }
+                .login-heading h1 { margin: 0; font-size: 22px; font-weight: 400; color: #fff; text-shadow: 0 1px 5px rgba(0, 0, 0, .25); }
+                .login-heading p { margin: 2px 0 0; color: #fff; font-size: 17px; text-shadow: 0 1px 5px rgba(0, 0, 0, .22); }
+                .location { margin: 2px 0 0; font-size: 12px; color: #111; }
+                .location i { margin-right: 4px; }
+
+                .status, .errors {
+                    padding: 9px 11px;
+                    margin-bottom: 13px;
+                    border-radius: 7px;
+                    font-size: 12px;
+                }
+
+                .status { color: #075b3d; background: rgba(217, 250, 235, .9); }
+                .errors { color: #8a1d1d; background: rgba(255, 224, 224, .9); }
+                .errors p { margin: 0; }
+
+                .field { margin-bottom: 12px; }
+                .field label { display: block; margin-bottom: 5px; font-size: 12px; color: #111; }
+                .input-wrap { position: relative; }
+                .input-wrap > i { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: #75808a; font-size: 16px; }
+                .input-wrap input {
+                    width: 100%;
+                    height: 36px;
+                    padding: 0 37px 0 36px;
+                    border: 1px solid var(--line);
+                    border-radius: 6px;
+                    outline: none;
+                    color: #2b3339;
+                    background: rgba(255, 255, 255, .67);
+                    font: inherit;
+                    font-size: 12px;
+                }
+                .input-wrap input:focus { border-color: var(--teal); box-shadow: 0 0 0 3px rgba(7, 83, 106, .15); }
+                .input-wrap input::placeholder { color: #6d7479; }
+                .password-toggle { position: absolute; top: 50%; right: 11px; padding: 0; border: 0; transform: translateY(-50%); color: #68727a; background: transparent; cursor: pointer; }
+                .password-toggle:hover { color: var(--teal); }
+
+                .login-button {
+                    width: 100%;
+                    height: 36px;
+                    margin-top: 1px;
+                    border: 0;
+                    border-radius: 20px;
+                    color: #fff;
+                    background: var(--teal);
+                    font-size: 12px;
+                    font-weight: 700;
+                    cursor: pointer;
+                    transition: background .2s, transform .2s;
+                }
+                .login-button:hover { background: var(--teal-dark); transform: translateY(-1px); }
+
+                .login-links { margin-top: 11px; text-align: center; font-size: 11px; line-height: 1.8; }
+                .login-links a { color: #123e4e; text-decoration: none; }
+                .login-links a:hover { text-decoration: underline; }
+                .copyright { position: absolute; z-index: 1; bottom: 17px; color: rgba(255, 255, 255, .9); font-size: 10px; text-shadow: 0 1px 4px #333; }
+
+                @media (max-width: 560px) {
+                    .login-page { padding: 82px 15px 65px; background-position: 58% center; }
+                    .brand { top: 23px; left: 18px; }
+                    .login-card { padding: 20px 16px 17px; }
+                }
+            </style>
+        </head>
+        <body>
+            <main class="login-page">
+                <div class="brand" aria-label="Toko Sembako Jazzel">
+                    <i class="bi bi-shop-window brand-icon" aria-hidden="true"></i>
+                    <span class="brand-name">JAZZEL <span class="flag" aria-label="Indonesia"></span></span>
+                </div>
+
+                <section class="login-card" aria-labelledby="login-title">
+                    <header class="login-heading">
+                        <h1 id="login-title">LOGIN KASIR SEMBAKO</h1>
+                        <p>Toko Sembako Jazzel</p>
+                        <div class="location"><i class="bi bi-geo-alt-fill" aria-hidden="true"></i>Sabu Raijua - Nusa Tenggara Timur</div>
+                    </header>
+
+                    @if (session('status'))
+                        <div class="status">{{ session('status') }}</div>
+                    @endif
+
+                    @if ($errors->any())
+                        <div class="errors" role="alert">
+                            @foreach ($errors->all() as $error)
+                                <p>{{ $error }}</p>
+                            @endforeach
+                        </div>
+                    @endif
+
+                    <form method="POST" action="{{ route('login') }}">
+                        @csrf
+                        <div class="field">
+                            <label for="email">Nama Pengguna (Username)</label>
+                            <div class="input-wrap">
+                                <i class="bi bi-person" aria-hidden="true"></i>
+                                <input id="email" type="text" name="email" value="{{ old('email') }}" placeholder="Masukkan Username" autocomplete="username" required autofocus>
+                            </div>
+                        </div>
+
+                        <div class="field">
+                            <label for="password">Kata Sandi (Password)</label>
+                            <div class="input-wrap">
+                                <i class="bi bi-lock" aria-hidden="true"></i>
+                                <input id="password" type="password" name="password" placeholder="Masukkan Kata Sandi" autocomplete="current-password" required>
+                                <button class="password-toggle" type="button" aria-label="Tampilkan kata sandi" aria-pressed="false"><i class="bi bi-eye-slash" aria-hidden="true"></i></button>
+                            </div>
+                        </div>
+
+                        <button class="login-button" type="submit">LOGIN MASUK</button>
+                    </form>
+
+                    <div class="login-links">
+                        @if (Route::has('password.request'))
+                            <a href="{{ route('password.request') }}">Lupa Kata Sandi?</a><br>
+                        @endif
+                        @if (Route::has('register'))
+                            <a href="{{ route('register') }}">Daftar Akun Baru (Jika Belum)</a>
+                        @endif
+                    </div>
+                </section>
+
+                <div class="copyright">&copy; Copyright Alttoch &middot; 27.15, 2023</div>
+            </main>
+
+            <script>
+                const toggle = document.querySelector('.password-toggle');
+                const password = document.querySelector('#password');
+                toggle?.addEventListener('click', () => {
+                    const visible = password.type === 'text';
+                    password.type = visible ? 'password' : 'text';
+                    toggle.setAttribute('aria-pressed', String(!visible));
+                    toggle.setAttribute('aria-label', visible ? 'Tampilkan kata sandi' : 'Sembunyikan kata sandi');
+                    toggle.querySelector('i').className = visible ? 'bi bi-eye-slash' : 'bi bi-eye';
+                });
+            </script>
+        </body>
+        </html>

@@ -14,7 +14,8 @@
 
             <form
                 action="{{ route('products.update', $product) }}"
-                method="POST">
+                method="POST"
+                enctype="multipart/form-data">
 
                 @csrf
                 @method('PUT')

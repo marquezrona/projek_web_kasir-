@@ -36,9 +36,13 @@ class ProductController extends Controller
             'description' => 'nullable|string',
             'price'       => 'required|numeric|min:0',
             'stock'       => 'required|integer|min:0',
-            'image'       => 'nullable|string|max:255',
+            'image'       => 'nullable|image|mimes:jpeg,jpg,png,webp|max:2048',
             'is_active'   => 'nullable|boolean',
         ]);
+
+        if ($request->hasFile('image')) {
+            $validated['image'] = $request->file('image')->store('products', 'public');
+        }
 
         $validated['is_active'] = $request->has('is_active');
 
@@ -76,9 +80,17 @@ class ProductController extends Controller
             'description' => 'nullable|string',
             'price'       => 'required|numeric|min:0',
             'stock'       => 'required|integer|min:0',
-            'image'       => 'nullable|string|max:255',
+            'image'       => 'nullable|image|mimes:jpeg,jpg,png,webp|max:2048',
             'is_active'   => 'nullable|boolean',
         ]);
+
+        if ($request->hasFile('image')) {
+            if ($product->image && \Storage::disk('public')->exists($product->image)) {
+                \Storage::disk('public')->delete($product->image);
+            }
+
+            $validated['image'] = $request->file('image')->store('products', 'public');
+        }
 
         $validated['is_active'] = $request->has('is_active');
 

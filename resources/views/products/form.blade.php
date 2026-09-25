@@ -63,6 +63,32 @@
 </div>
 
 
+{{-- Gambar --}}
+<div class="mb-3">
+    <label class="form-label">
+        Gambar Produk
+    </label>
+
+    <input
+        type="file"
+        name="image"
+        accept="image/*"
+        class="form-control @error('image') is-invalid @enderror"
+    >
+
+    @if(!empty($product->image ?? null))
+        <div class="mt-2">
+            <img src="{{ asset('storage/'.$product->image) }}" alt="{{ $product->name }}" class="img-thumbnail" style="max-width: 180px; max-height: 180px; object-fit: cover;">
+        </div>
+    @endif
+
+    @error('image')
+        <div class="invalid-feedback d-block">
+            {{ $message }}
+        </div>
+    @enderror
+</div>
+
 {{-- Harga dan Stock --}}
 <div class="row">
 

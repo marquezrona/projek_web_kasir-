@@ -70,17 +70,27 @@
 
                                 {{-- Product --}}
                                 <td>
-                                    <strong>
-                                        {{ $product->name }}
-                                    </strong>
+                                    <div class="d-flex align-items-center gap-3">
+                                        @if($product->image)
+                                            <img src="{{ asset('storage/' . $product->image) }}" alt="{{ $product->name }}" style="width: 48px; height: 48px; object-fit: cover; border-radius: 8px; border: 1px solid #ddd;">
+                                        @else
+                                            <div style="width: 48px; height: 48px; border-radius: 8px; border: 1px dashed #ccc; display: flex; align-items: center; justify-content: center; color: #999; font-size: 12px;">No img</div>
+                                        @endif
 
-                                    @if($product->description)
-                                        <br>
+                                        <div>
+                                            <strong>
+                                                {{ $product->name }}
+                                            </strong>
 
-                                        <small class="text-muted">
-                                            {{ Str::limit($product->description, 50) }}
-                                        </small>
-                                    @endif
+                                            @if($product->description)
+                                                <br>
+
+                                                <small class="text-muted">
+                                                    {{ Str::limit($product->description, 50) }}
+                                                </small>
+                                            @endif
+                                        </div>
+                                    </div>
                                 </td>
 
                                 {{-- Kategori --}}

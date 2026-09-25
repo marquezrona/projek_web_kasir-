@@ -27,6 +27,21 @@
 
             <table class="table">
 
+                {{-- Gambar --}}
+                <tr>
+                    <th width="200">
+                        Gambar
+                    </th>
+
+                    <td>
+                        @if($product->image)
+                            <img src="{{ asset('storage/' . $product->image) }}" alt="{{ $product->name }}" class="img-thumbnail" style="max-width: 220px; max-height: 220px; object-fit: cover;">
+                        @else
+                            <span class="text-muted">Tidak ada gambar</span>
+                        @endif
+                    </td>
+                </tr>
+
                 {{-- Nama --}}
                 <tr>
                     <th width="200">
