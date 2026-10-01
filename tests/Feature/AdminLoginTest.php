@@ -16,6 +16,7 @@ class AdminLoginTest extends TestCase
             'name' => 'Admin Astrowisata',
             'email' => 'admin@astrowisata.test',
             'password' => bcrypt('password123'),
+            'role' => 'admin',
         ]);
 
         $response = $this->post('/login', [
@@ -25,5 +26,14 @@ class AdminLoginTest extends TestCase
 
         $response->assertRedirect('/admin');
         $this->assertAuthenticatedAs($user);
+        $this->get('/admin')->assertOk();
+    }
+
+    public function test_cashier_can_access_cashier_page_but_not_admin_dashboard(): void
+    {
+        $cashier = User::factory()->create(['role' => 'kasir']);
+
+        $this->actingAs($cashier)->get('/kasir')->assertOk();
+        $this->actingAs($cashier)->get('/admin')->assertForbidden();
     }
 }
