@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>Dashboard Kasir - Toko Sembako Jazzel</title>
+    <title>Dashboard Kasir - {{ $storeSettings->store_name }}</title>
     <link rel="stylesheet" href="{{ asset('assets/vendor/bootstrap-icons/bootstrap-icons.css') }}">
     <style>
         :root { --teal:#07536a; --teal-deep:#063b4d; --coral:#e96357; --ink:#17212b; --muted:#77848c; --line:#e6ebed; --surface:#fff; --canvas:#f3f6f5; }
@@ -14,7 +14,7 @@
         .app-shell { min-height:100vh; display:flex; }
         .sidebar { width:248px; flex:0 0 248px; display:flex; flex-direction:column; padding:24px 16px 18px; color:#fff; background:var(--teal-deep); }
         .brand { display:flex; align-items:center; gap:10px; padding:0 12px 25px; color:#fff; text-decoration:none; }
-        .brand i { font-size:28px; }
+        .brand-logo { width:48px; height:48px; border:2px solid rgba(255,255,255,.85); border-radius:50%; background:#fff; object-fit:cover; }
         .brand strong { font-size:17px; letter-spacing:.02em; }
         .flag { width:20px; height:13px; display:inline-block; margin-left:3px; vertical-align:1px; background:linear-gradient(#e72b35 0 50%,#fff 50%); box-shadow:0 0 0 1px rgba(255,255,255,.25); }
         .eyebrow { padding:0 12px 9px; color:rgba(255,255,255,.46); font-size:10px; font-weight:700; letter-spacing:.14em; text-transform:uppercase; }
@@ -80,12 +80,11 @@
 <body>
     <div class="app-shell">
         <aside class="sidebar" id="sidebar">
-            <a class="brand" href="{{ route('dashboard') }}"><i class="bi bi-shop-window" aria-hidden="true"></i><strong>JAZZEL <span class="flag"></span></strong></a>
+            <a class="brand" href="{{ route('dashboard') }}"><img class="brand-logo" src="{{ $storeSettings->logo_url }}" alt="Logo {{ $storeSettings->store_name }}"><strong>{{ $storeSettings->store_name }} <span class="flag"></span></strong></a>
             <div class="eyebrow">Menu Utama</div>
             <nav class="nav-list" aria-label="Navigasi utama">
                 <a class="nav-link active" href="{{ route('dashboard') }}"><i class="bi bi-grid-1x2-fill"></i>Ringkasan</a>
                 <a class="nav-link" href="{{ route('products.index') }}"><i class="bi bi-box-seam"></i>Kelola Produk</a>
-                <a class="nav-link" href="{{ route('cashier.index') }}"><i class="bi bi-receipt"></i>Transaksi</a>
                 <a class="nav-link" href="#laporan"><i class="bi bi-bar-chart-line"></i>Laporan Penjualan</a>
             </nav>
             <div class="sidebar-spacer"></div>
@@ -116,7 +115,7 @@
                 </article>
                 <aside class="panel" id="transaksi">
                     <div class="panel-header"><div><h2>Akses Cepat</h2><p>Kelola aktivitas toko</p></div></div>
-                    <div class="quick-actions"><a class="quick-action" href="{{ route('cashier.index') }}"><i class="bi bi-receipt"></i><span><strong>Buka Kasir</strong><span>Mulai transaksi baru</span></span></a><a class="quick-action" href="{{ route('products.create') }}"><i class="bi bi-plus-lg"></i><span><strong>Tambah Produk</strong><span>Masukkan barang baru</span></span></a><a class="quick-action" href="{{ route('products.index') }}"><i class="bi bi-boxes"></i><span><strong>Lihat Semua Produk</strong><span>Kelola stok dan harga</span></span></a><a class="quick-action" href="#laporan"><i class="bi bi-file-earmark-bar-graph"></i><span><strong>Laporan Penjualan</strong><span>Segera tersedia</span></span></a></div>
+                    <div class="quick-actions"><a class="quick-action" href="{{ route('products.create') }}"><i class="bi bi-plus-lg"></i><span><strong>Tambah Produk</strong><span>Masukkan barang baru</span></span></a><a class="quick-action" href="{{ route('products.index') }}"><i class="bi bi-boxes"></i><span><strong>Lihat Semua Produk</strong><span>Kelola stok dan harga</span></span></a><a class="quick-action" href="#laporan"><i class="bi bi-file-earmark-bar-graph"></i><span><strong>Laporan Penjualan</strong><span>Segera tersedia</span></span></a></div>
                     <div class="notice"><i class="bi bi-lightbulb"></i> Periksa stok yang berwarna coral agar persediaan toko tetap aman.</div>
                 </aside>
             </section>

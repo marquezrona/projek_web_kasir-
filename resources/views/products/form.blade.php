@@ -89,6 +89,30 @@
     @enderror
 </div>
 
+{{-- Status penjualan --}}
+<div class="mb-3">
+    <input type="hidden" name="is_active" value="0">
+    <div class="form-check">
+        <input
+            type="checkbox"
+            name="is_active"
+            id="is_active"
+            value="1"
+            class="form-check-input @error('is_active') is-invalid @enderror"
+            @checked(old('is_active', $product->is_active ?? true))
+        >
+        <label class="form-check-label fw-semibold" for="is_active">
+            Aktif dan tampil di transaksi kasir
+        </label>
+    </div>
+    <div class="form-text">
+        Barang hanya muncul untuk dijual jika status aktif dan stok lebih dari 0.
+    </div>
+    @error('is_active')
+        <div class="invalid-feedback d-block">{{ $message }}</div>
+    @enderror
+</div>
+
 {{-- Harga dan Stock --}}
 <div class="row">
 
