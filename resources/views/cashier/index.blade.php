@@ -15,12 +15,12 @@
         .pos-heading h1 {
             margin: 0;
             color: #17243a;
-            font-size: 23px;
-            font-weight: 750;
+            font-size: 30px;
+            font-weight: 800;
             letter-spacing: -.03em;
         }
 
-        .pos-heading p { margin: 4px 0 0; color: #738198; font-size: 12px; }
+        .pos-heading p { margin: 4px 0 0; color: #738198; font-size: 14px; }
 
         .transaction-chip {
             padding: 8px 11px;
@@ -51,25 +51,25 @@
         .search-area { display: flex; gap: 9px; }
         .search-input { position: relative; flex: 1; min-width: 0; }
         .search-input > i { position: absolute; top: 50%; left: 12px; z-index: 1; transform: translateY(-50%); color: #738198; }
-        .pos-view .form-control { width: 100%; height: 38px; padding: 0 11px; border: 1px solid #d7e0e9; border-radius: 7px; color: #17243a; background: #fff; font-size: 12px; }
+        .pos-view .form-control { width: 100%; height: 42px; padding: 0 11px; border: 1px solid #d7e0e9; border-radius: 8px; color: #17243a; background: rgba(255,255,255,.96); font-size: 14px; }
         .pos-view .search-input .form-control { padding-left: 35px; }
         .pos-view .form-control:focus { border-color: #07536a; box-shadow: 0 0 0 3px rgba(7,83,106,.1); }
-        .pos-view .btn { min-height: 38px; padding: 0 14px; border-radius: 7px; font-size: 12px; font-weight: 700; }
+        .pos-view .btn { min-height: 42px; padding: 0 16px; border-radius: 8px; font-size: 13px; font-weight: 700; }
         .pos-view .btn-primary { background: #07536a; border-color: #07536a; }
         .pos-view .btn-primary:hover { background: #064456; border-color: #064456; }
         .product-results { position: absolute; z-index: 5; top: 43px; right: 0; left: 0; display: none; overflow: hidden; border: 1px solid #e3e9f0; border-radius: 8px; background: #fff; box-shadow: 0 8px 20px rgba(19,39,67,.12); }
         .product-item { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 12px; border-bottom: 1px solid #edf1f5; cursor: pointer; font-size: 12px; }
         .product-item:last-child { border-bottom: 0; }
         .product-item:hover { background: #f5f8fc; }
-        .product-name { color: #17243a; font-weight: 700; }
-        .product-meta { margin-top: 3px; color: #738198; font-size: 10px; }
-        .product-price { color: #07536a; font-weight: 750; white-space: nowrap; }
+        .product-name { color: #17243a; font-size: 15px; font-weight: 700; }
+        .product-meta { margin-top: 3px; color: #738198; font-size: 11px; }
+        .product-price { color: #07536a; font-size: 14px; font-weight: 800; white-space: nowrap; }
         .customer-area { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 14px; }
         .field-label { display: block; margin-bottom: 5px; color: #65748b; font-size: 10px; font-weight: 700; }
         .table-wrap { width: calc(100% - 28px); margin: 0 auto; overflow-x: auto; }
-        .pos-table { width: 100%; border-collapse: collapse; font-size: 12px; }
-        .pos-table th { padding: 11px 12px; border: 0; border-bottom: 1px solid #d4dfe7; color: #34445b; background: #edf4f6; font-size: 11px; font-weight: 750; letter-spacing: .05em; text-align: left; text-transform: uppercase; white-space: nowrap; }
-        .pos-table td { padding: 12px; border: 0; border-bottom: 1px solid #edf1f5; color: #34445b; white-space: nowrap; }
+        .pos-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+        .pos-table th { padding: 12px 12px; border: 0; border-bottom: 1px solid #d4dfe7; color: #34445b; background: linear-gradient(180deg, #edf5f8, #e3eef3); font-size: 12px; font-weight: 750; letter-spacing: .05em; text-align: left; text-transform: uppercase; white-space: nowrap; }
+        .pos-table td { padding: 12px; border: 0; border-bottom: 1px solid #edf1f5; color: #34445b; font-size: 13px; white-space: nowrap; }
         .pos-table tbody tr:last-child td { border-bottom: 0; }
         .pos-table tbody tr:hover td { background: #f5f9fb; }
         .pos-table th:last-child, .pos-table td:last-child { text-align: center; }
@@ -80,12 +80,12 @@
         .qty-control button, .remove-btn { width: 25px; height: 25px; border: 1px solid #dbe3ec; border-radius: 5px; color: #07536a; background: #fff; cursor: pointer; }
         .qty-control input { width: 38px; height: 25px; border: 1px solid #dbe3ec; border-radius: 5px; text-align: center; font-size: 11px; }
         .remove-btn { color: #c23445; }
-        .summary-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 35px; color: #65748b; font-size: 11px; }
+        .summary-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 38px; color: #65748b; font-size: 13px; }
         .summary-row strong { color: #17243a; }
-        .summary-row input { width: 92px; height: 28px; padding: 0 8px; border: 1px solid #d7e0e9; border-radius: 6px; color: #17243a; background: #fff; text-align: right; font-size: 11px; }
-        .total-box { margin-top: 10px; padding: 13px; border: 1px solid #e3e9f0; border-radius: 8px; background: #f5f8fc; }
-        .total-label { color: #738198; font-size: 9px; font-weight: 750; letter-spacing: .08em; }
-        .total-value { margin-top: 4px; color: #07536a; font-size: 22px; font-weight: 800; }
+        .summary-row input { width: 98px; height: 30px; padding: 0 8px; border: 1px solid #d7e0e9; border-radius: 6px; color: #17243a; background: #fff; text-align: right; font-size: 13px; }
+        .total-box { margin-top: 10px; padding: 13px; border: 1px solid #e3e9f0; border-radius: 8px; background: linear-gradient(180deg, #edf8fb, #eef3f8); }
+        .total-label { color: #738198; font-size: 10px; font-weight: 750; letter-spacing: .08em; }
+        .total-value { margin-top: 4px; color: #07536a; font-size: 24px; font-weight: 800; }
         .payment-box { margin-top: 13px; padding: 12px; border: 1px solid #dce7ef; border-radius: 8px; background: #f8fbfd; }
         .payment-label { margin-bottom: 6px; color: #536176; font-size: 10px; font-weight: 750; }
         .payment-input { width: 100%; height: 40px; padding: 0 10px; border: 1px solid #a9c5d6; border-radius: 7px; outline: none; color: #17243a; background: #fff; text-align: right; font-size: 18px; font-weight: 700; }
