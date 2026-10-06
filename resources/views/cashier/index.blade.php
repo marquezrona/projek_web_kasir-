@@ -67,9 +67,10 @@
         .customer-area { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 14px; }
         .field-label { display: block; margin-bottom: 5px; color: #65748b; font-size: 10px; font-weight: 700; }
         .table-wrap { width: calc(100% - 28px); margin: 0 auto; overflow-x: auto; }
-        .pos-table { width: 100%; border: 1px solid #d4dfe7; border-collapse: collapse; font-size: 12px; }
-        .pos-table th { padding: 11px 12px; border: 1px solid #d4dfe7; color: #34445b; background: #edf4f6; font-size: 11px; font-weight: 750; letter-spacing: .05em; text-align: left; text-transform: uppercase; white-space: nowrap; }
-        .pos-table td { padding: 12px; border: 1px solid #d4dfe7; color: #34445b; white-space: nowrap; }
+        .pos-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+        .pos-table th { padding: 11px 12px; border: 0; border-bottom: 1px solid #d4dfe7; color: #34445b; background: #edf4f6; font-size: 11px; font-weight: 750; letter-spacing: .05em; text-align: left; text-transform: uppercase; white-space: nowrap; }
+        .pos-table td { padding: 12px; border: 0; border-bottom: 1px solid #edf1f5; color: #34445b; white-space: nowrap; }
+        .pos-table tbody tr:last-child td { border-bottom: 0; }
         .pos-table tbody tr:hover td { background: #f5f9fb; }
         .pos-table th:last-child, .pos-table td:last-child { text-align: center; }
         .text-right { text-align: right; }
@@ -123,11 +124,26 @@
 
         @media (max-width: 560px) {
             .pos-heading { align-items: flex-start; flex-direction: column; }
-            .transaction-chip { text-align: left; }
+            .transaction-chip { width: 100%; text-align: left; }
             .customer-area, .pos-right { grid-template-columns: 1fr; }
             .search-area { flex-direction: column; }
             .search-area .btn { width: 100%; }
             .table-wrap { width: calc(100% - 20px); }
+            .table-wrap { max-width: 100%; -webkit-overflow-scrolling: touch; overscroll-behavior-x: contain; }
+            .pos-table { min-width: 610px; }
+            .pos-view .card-body { padding: 13px 12px; }
+            .pos-view .form-control { min-height: 44px; height: 44px; font-size: 16px; }
+            .field-label { font-size: 12px; }
+            .qty-control button, .remove-btn { width: 36px; height: 36px; }
+            .qty-control input { width: 44px; height: 36px; font-size: 16px; }
+            .summary-row { min-height: 44px; font-size: 13px; }
+            .summary-row input { width: 120px; height: 40px; font-size: 16px; }
+            .payment-input { height: 48px; font-size: 20px; }
+            .payment-method { gap: 8px; }
+            .payment-method button { min-height: 44px; font-size: 12px; }
+            .action-area { gap: 8px; }
+            .action-area .btn, .btn-pay { min-height: 44px; }
+            .btn-pay { min-height: 50px !important; }
         }
     </style>
 @endpush
@@ -301,61 +317,149 @@
         document.querySelector('#holdButton').addEventListener('click', () => alert(cart.length ? 'Transaksi berhasil ditahan.' : 'Tidak ada transaksi untuk ditahan.'));
         async function submitCheckout(button) {
             const payment = Number(document.querySelector('#payment').value) || 0;
-            if (!cart.length) return alert('Keranjang masih kosong.');
-            if (payment < totalValue()) return alert('Uang pembayaran masih kurang.');
 
-            button.disabled = true;
-            try {
-                const response = await fetch(@json(route('cashier.checkout')), {
+    if (!cart.length) {
+        return alert('Keranjang masih kosong.');
+    }
+
+    if (payment < totalValue()) {
+        return alert('Uang pembayaran masih kurang.');
+    }
+
+    button.disabled = true;
+
+    try {
+        const response = await fetch(@json(route('cashier.checkout')), {
+            method: 'POST',
+            headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+            },
+            body: JSON.stringify({
+                items: cart.map(item => ({
+                    product_id: item.id,
+                    quantity: item.qty
+                })),
+                customer_type: document.querySelector('#customerType').value,
+                customer_contact: document.querySelector('#customerContact').value,
+                discount_percent: Number(document.querySelector('#discountPercent').value) || 0,
+                discount_amount: Number(document.querySelector('#discountAmount').value) || 0,
+                tax: Number(document.querySelector('#tax').value) || 0,
+                other_fee: Number(document.querySelector('#otherFee').value) || 0,
+                paid: payment,
+                payment_method: document.querySelector('.payment-method button.active').dataset.method
+            })
+        });
+
+        const result = await response.json();
+
+        if (!response.ok) {
+            const errors = Object.values(result.errors || {}).flat();
+
+            throw new Error(
+                errors.join('\n') ||
+                result.message ||
+                'Transaksi gagal disimpan.'
+            );
+        }
+
+        // ===============================
+        // KONFIRMASI CETAK STRUK
+        // ===============================
+        const printReceipt = confirm(
+            'Transaksi berhasil disimpan!\n\n' +
+            'Invoice : ' + result.invoice + '\n' +
+            'Total   : ' + money(result.total) + '\n' +
+            'Kembali : ' + money(result.change) + '\n\n' +
+            'Apakah Anda ingin mencetak struk?'
+        );
+
+        if (printReceipt) {
+
+            const printResponse = await fetch(
+                @json(route('cashier.receipt.print', ['sale' => '__SALE_ID__']))
+                    .replace('__SALE_ID__', result.sale_id),
+                {
                     method: 'POST',
                     headers: {
                         'Accept': 'application/json',
-                        'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
-                    },
-                    body: JSON.stringify({
-                        items: cart.map(item => ({ product_id: item.id, quantity: item.qty })),
-                        customer_type: document.querySelector('#customerType').value,
-                        customer_contact: document.querySelector('#customerContact').value,
-                        discount_percent: Number(document.querySelector('#discountPercent').value) || 0,
-                        discount_amount: Number(document.querySelector('#discountAmount').value) || 0,
-                        tax: Number(document.querySelector('#tax').value) || 0,
-                        other_fee: Number(document.querySelector('#otherFee').value) || 0,
-                        paid: payment,
-                        payment_method: document.querySelector('.payment-method button.active').dataset.method
-                    })
-                });
-                const result = await response.json();
-                if (!response.ok) {
-                    const errors = Object.values(result.errors || {}).flat();
-                    throw new Error(errors.join('\n') || result.message || 'Transaksi gagal disimpan.');
+                        'X-CSRF-TOKEN':
+                            document.querySelector('meta[name="csrf-token"]').content
+                    }
                 }
+            );
 
-                alert(`Transaksi berhasil disimpan!\n\nInvoice: ${result.invoice}\nTotal: ${money(result.total)}\nKembali: ${money(result.change)}`);
-                window.location.href = result.history_url;
-            } catch (error) {
-                alert(error.message || 'Transaksi gagal disimpan. Silakan coba lagi.');
-                button.disabled = false;
+            if (!printResponse.ok) {
+                alert(
+                    'Transaksi berhasil disimpan, tetapi struk gagal dicetak.\n\n' +
+                    'Periksa koneksi printer thermal.'
+                );
+            } else {
+                alert('Struk berhasil dikirim ke printer.');
             }
         }
+
+        // Kembali ke riwayat transaksi
+        window.location.href = result.history_url;
+
+    } catch (error) {
+
+        alert(
+            error.message ||
+            'Transaksi gagal disimpan. Silakan coba lagi.'
+        );
+
+        button.disabled = false;
+    }
         const qrisModalElement = document.querySelector('#qrisSimulationModal');
-        const qrisModal = bootstrap.Modal.getOrCreateInstance(qrisModalElement);
+        const qrisModal = qrisModalElement && typeof bootstrap !== 'undefined' ? bootstrap.Modal.getOrCreateInstance(qrisModalElement) : null;
 
-        document.querySelector('#payButton').addEventListener('click', event => {
-            if (currentPaymentMethod() === 'qris') {
-                if (!cart.length) return alert('Keranjang masih kosong.');
-                paymentInput.value = totalValue();
-                document.querySelector('#qrisSimulationAmount').textContent = money(totalValue());
-                qrisModal.show();
-                return;
-            }
+document.querySelector('#payButton').addEventListener('click', event => {
+    if (!cart.length) {
+        return alert('Keranjang masih kosong.');
+    }
 
+    const payment = Number(paymentInput.value) || 0;
+
+    if (payment < totalValue()) {
+        return alert('Uang pembayaran masih kurang.');
+    }
+
+    // Konfirmasi sebelum transaksi diproses
+    const confirmed = confirm(
+        'Konfirmasi Transaksi\n\n' +
+        'Total     : ' + money(totalValue()) + '\n' +
+        'Bayar     : ' + money(payment) + '\n' +
+        'Kembali   : ' + money(Math.max(0, payment - totalValue())) + '\n\n' +
+        'Apakah transaksi sudah benar dan ingin mencetak struk?'
+    );
+
+    if (!confirmed) {
+        return;
+    }
+
+    if (currentPaymentMethod() === 'qris') {
+        paymentInput.value = totalValue();
+        const amountEl = document.querySelector('#qrisSimulationAmount');
+        if (amountEl) amountEl.textContent = money(totalValue());
+        if (qrisModal) {
+            qrisModal.show();
+        } else {
             submitCheckout(event.currentTarget);
-        });
-        document.querySelector('#confirmQrisSimulation').addEventListener('click', () => {
-            qrisModal.hide();
-            submitCheckout(document.querySelector('#payButton'));
-        });
+        }
+        return;
+    }
+
+    submitCheckout(event.currentTarget);
+});
+        const confirmQrisBtn = document.querySelector('#confirmQrisSimulation');
+        if (confirmQrisBtn) {
+            confirmQrisBtn.addEventListener('click', () => {
+                if (qrisModal) qrisModal.hide();
+                submitCheckout(document.querySelector('#payButton'));
+            });
+        }
         document.querySelector('#currentDate').textContent = new Date().toLocaleString('id-ID'); document.addEventListener('keydown', event => { if (event.key === 'F2') { event.preventDefault(); searchInput.focus(); } if (event.key === 'F4') { event.preventDefault(); document.querySelector('#payment').focus(); } if (event.key === 'Escape') document.querySelector('#cancelButton').click(); }); renderCart();
     </script>
 @endpush

@@ -35,4 +35,8 @@ return [
         ],
     ],
 
+    'receipt' => [
+        'printer' => env('RECEIPT_PRINTER', 'smb://localhost/Generic / Text Only'),
+    ],
+
 ];

@@ -2,9 +2,11 @@
 
 namespace App\Providers;
 
+use App\Contracts\ReceiptPrinter;
 use App\Models\StoreSetting;
-use Illuminate\Support\ServiceProvider;
+use App\Services\WindowsEscPosReceiptPrinter;
 use Illuminate\Support\Facades\View;
+use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -13,7 +15,7 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        $this->app->bind(ReceiptPrinter::class, WindowsEscPosReceiptPrinter::class);
     }
 
     /**

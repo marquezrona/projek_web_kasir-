@@ -7,7 +7,7 @@
     <title>Dashboard Kasir - {{ $storeSettings->store_name }}</title>
     <link rel="stylesheet" href="{{ asset('assets/vendor/bootstrap-icons/bootstrap-icons.css') }}">
     <style>
-        :root { --teal:#07536a; --teal-deep:#063b4d; --coral:#e96357; --ink:#17212b; --muted:#77848c; --line:#e6ebed; --surface:#fff; --canvas:#f3f6f5; }
+        :root { --teal:#07536a; --teal-deep:#063b4d; --teal-soft:#dfeff2; --coral:#e96357; --coral-strong:#d64c3d; --amber:#f7b267; --ink:#17212b; --muted:#77848c; --line:#e6ebed; --surface:#fff; --canvas:#f3f6f5; }
         * { box-sizing:border-box; }
         body { margin:0; background:var(--canvas); color:var(--ink); font-family:"Segoe UI",Tahoma,sans-serif; }
         button,input { font:inherit; }
@@ -23,12 +23,13 @@
         .nav-link i { width:17px; font-size:16px; }
         .nav-link:hover,.nav-link.active { color:#fff; background:rgba(255,255,255,.13); }
         .sidebar-spacer { flex:1; }
-        .user-mini { display:flex; align-items:center; gap:10px; padding:14px 12px; border-top:1px solid rgba(255,255,255,.1); }
-        .avatar { width:31px; height:31px; display:grid; place-items:center; border-radius:50%; color:var(--teal-deep); background:#d9e7e7; font-size:12px; font-weight:800; }
-        .user-mini strong { display:block; color:#fff; font-size:12px; }
-        .user-mini span { display:block; margin-top:2px; color:rgba(255,255,255,.48); font-size:10px; }
-        .logout { display:block; width:calc(100% - 24px); margin:3px 12px 0; padding:9px 0; border:1px solid rgba(255,255,255,.18); border-radius:7px; color:rgba(255,255,255,.7); background:transparent; cursor:pointer; font-size:11px; text-align:center; }
-        .logout:hover { color:#fff; border-color:rgba(255,255,255,.5); }
+        .user-mini { display:flex; align-items:center; gap:10px; padding:14px 12px; border:1px solid rgba(255,255,255,.12); border-radius:12px; background:rgba(255,255,255,.08); box-shadow:inset 0 1px 0 rgba(255,255,255,.06); }
+        .avatar { width:31px; height:31px; display:grid; place-items:center; border-radius:50%; color:var(--teal-deep); background:linear-gradient(135deg,#ecf7f7,#d7e9eb); font-size:12px; font-weight:800; }
+        .user-meta { min-width:0; flex:1; }
+        .user-mini strong { display:block; color:#fff; font-size:12px; line-height:1.3; }
+        .user-role { display:inline-flex; align-items:center; justify-content:center; min-width:58px; margin-top:5px; padding:3px 8px; border-radius:999px; color:#1d3340; background:linear-gradient(135deg, #ffd49a, #f39b73); font-size:9px; font-weight:800; letter-spacing:.08em; }
+        .logout { display:block; width:calc(100% - 24px); margin:12px 12px 0; padding:9px 0; border:1px solid rgba(255,255,255,.1); border-radius:9px; color:#fff; background:linear-gradient(135deg, var(--coral), var(--coral-strong)); box-shadow:0 8px 18px rgba(214,76,61,.25); cursor:pointer; font-size:11px; font-weight:700; text-align:center; transition:transform .18s ease, filter .18s ease; }
+        .logout:hover { transform:translateY(-1px); filter:brightness(1.04); }
         .main { min-width:0; flex:1; padding:25px 34px 40px; }
         .topbar { display:flex; align-items:center; justify-content:space-between; gap:18px; margin-bottom:29px; }
         .menu-button { display:none; border:0; color:var(--teal); background:transparent; font-size:23px; cursor:pointer; }
@@ -88,7 +89,13 @@
                 <a class="nav-link" href="#laporan"><i class="bi bi-bar-chart-line"></i>Laporan Penjualan</a>
             </nav>
             <div class="sidebar-spacer"></div>
-            <div class="user-mini"><div class="avatar">{{ strtoupper(substr(auth()->user()->name, 0, 1)) }}</div><div><strong>{{ auth()->user()->name }}</strong><span>Administrator</span></div></div>
+            <div class="user-mini">
+                <div class="avatar">{{ strtoupper(substr(auth()->user()->name, 0, 1)) }}</div>
+                <div class="user-meta">
+                    <strong>{{ auth()->user()->name }}</strong>
+                    <span class="user-role">{{ auth()->user()->role === 'admin' ? 'ADMIN' : 'KASIR' }}</span>
+                </div>
+            </div>
             <form method="POST" action="{{ route('logout') }}"><input type="hidden" name="_token" value="{{ csrf_token() }}"><button class="logout" type="submit"><i class="bi bi-box-arrow-right"></i> Keluar</button></form>
         </aside>
         <main class="main">

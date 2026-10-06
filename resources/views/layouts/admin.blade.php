@@ -13,6 +13,10 @@
             --muted: #738198;
             --line: #e3e9f0;
             --teal: #07536a;
+            --teal-soft: #dfeff2;
+            --coral: #e96357;
+            --coral-strong: #d64c3d;
+            --amber: #f7b267;
             --canvas: #f5f8fc;
             --surface: #fff;
         }
@@ -103,7 +107,7 @@
         .admin-user {
             display: flex;
             align-items: center;
-            gap: 9px;
+            gap: 10px;
             color: rgba(255,255,255,.9);
             font-size: 11px;
             white-space: nowrap;
@@ -111,13 +115,35 @@
 
         .admin-user .avatar {
             display: grid;
-            width: 28px;
-            height: 28px;
+            width: 30px;
+            height: 30px;
             place-items: center;
             border-radius: 50%;
             color: var(--teal);
-            background: var(--surface);
-            font-weight: 700;
+            background: linear-gradient(135deg, #edf8f9, #dfeef1);
+            font-weight: 800;
+        }
+
+        .admin-user .user-meta {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            line-height: 1.2;
+        }
+
+        .admin-user .user-role {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 56px;
+            margin-top: 2px;
+            padding: 3px 8px;
+            border-radius: 999px;
+            color: #1d3340;
+            background: linear-gradient(135deg, #ffd49a, #f39b73);
+            font-size: 8px;
+            font-weight: 800;
+            letter-spacing: .08em;
         }
 
         .admin-user form { margin: 0; }
@@ -127,19 +153,19 @@
             gap: 7px;
             min-height: 36px;
             padding: 0 12px;
-            border: 1px solid rgba(255,255,255,.82);
-            border-radius: 7px;
+            border: 1px solid rgba(255,255,255,.18);
+            border-radius: 8px;
             color: #fff;
-            background: #b93838;
+            background: linear-gradient(135deg, var(--coral), var(--coral-strong));
+            box-shadow: 0 8px 18px rgba(214,76,61,.18);
             font-size: 12px;
             font-weight: 700;
             white-space: nowrap;
-            transition: background .15s ease, border-color .15s ease;
+            transition: transform .15s ease, filter .15s ease, border-color .15s ease;
         }
-        .admin-user button:hover { border-color: #fff; background: #992d32; }
+        .admin-user button:hover { border-color: rgba(255,255,255,.6); filter: brightness(1.04); transform: translateY(-1px); }
         .admin-user button:focus-visible { outline: 3px solid #fff; outline-offset: 2px; }
         .admin-user button i { font-size: 15px; }
-        .admin-user small { color: #ffd5df !important; }
 
         .admin-content {
             width: 100%;
@@ -354,23 +380,84 @@
         }
 
         @media (max-width: 767px) {
-            .admin-navbar .container-fluid { align-items: flex-start; }
-            .admin-user { margin-left: auto; }
-            .workspace-shell { grid-template-columns: 220px minmax(0, 1fr); }
-            .workspace-sidebar { padding-right: 10px; padding-left: 10px; }
-            .workspace-layout .admin-content { padding-right: 16px; padding-left: 16px; }
+            .admin-navbar .container-fluid {
+                align-items: center;
+                flex-wrap: wrap;
+                row-gap: 10px;
+                padding: 10px max(14px, env(safe-area-inset-right)) 10px max(14px, env(safe-area-inset-left)) !important;
+            }
+            .navbar-brand {
+                flex: 1 1 100%;
+                min-width: 0;
+                margin-right: 0;
+            }
+            .navbar-brand > span { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+            .brand-mark { width: 40px; height: 40px; }
+            .admin-user {
+                width: 100%;
+                margin-left: 0;
+                padding: 8px 10px;
+                border: 1px solid rgba(255,255,255,.12);
+                border-radius: 10px;
+                background: rgba(255,255,255,.08);
+            }
+            .admin-user .user-meta { min-width: 0; flex: 1; }
+            .admin-user .user-meta > span:first-child {
+                max-width: 100%;
+                overflow: hidden;
+                text-overflow: ellipsis;
+            }
+            .admin-user button { margin-left: auto; }
+            .workspace-shell {
+                display: block;
+                min-height: calc(100vh - 120px);
+            }
+            .workspace-sidebar {
+                padding: 9px 12px;
+                border-right: 0;
+                border-bottom: 1px solid #064456;
+            }
+            .workspace-sidebar-title { display: none; }
+            .workspace-sidebar .admin-menu {
+                display: flex;
+                gap: 6px;
+                overflow-x: auto;
+                padding-bottom: 2px;
+                scrollbar-width: none;
+                -webkit-overflow-scrolling: touch;
+                overscroll-behavior-x: contain;
+                scroll-snap-type: x proximity;
+            }
+            .workspace-sidebar .admin-menu::-webkit-scrollbar { display: none; }
+            .workspace-sidebar .menu-link {
+                flex: 0 0 auto;
+                min-height: 44px;
+                padding: 0 12px;
+                font-size: 13px;
+                scroll-snap-align: start;
+            }
+            .workspace-sidebar .menu-link i { width: 20px; font-size: 16px; }
+            .workspace-layout .admin-content {
+                padding: 18px max(14px, env(safe-area-inset-right)) 32px max(14px, env(safe-area-inset-left));
+                padding-bottom: max(32px, env(safe-area-inset-bottom));
+            }
+            .admin-card > .table-responsive { -webkit-overflow-scrolling: touch; overscroll-behavior-x: contain; }
+            .admin-user button { min-height: 44px; }
         }
 
         @media (max-width: 575px) {
             .admin-content { padding: 18px 12px 36px; }
             .page-heading h1 { font-size: 23px; }
-            .workspace-shell { grid-template-columns: 205px minmax(0, 1fr); }
-            .workspace-sidebar { padding: 18px 8px; }
-            .workspace-sidebar .menu-link { min-height: 44px; padding: 0 10px; font-size: 14px; }
-            .workspace-sidebar .menu-link i { width: 22px; font-size: 17px; }
-            .workspace-sidebar-title { margin-right: 8px; margin-left: 8px; font-size: 11px; }
-            .workspace-layout .admin-content { min-width: 0; padding: 16px 10px 30px; }
-            .workspace-layout .admin-navbar .container-fluid { padding-right: 12px !important; padding-left: 12px !important; }
+            .workspace-layout .admin-content {
+                min-width: 0;
+                padding: 16px max(10px, env(safe-area-inset-right)) 30px max(10px, env(safe-area-inset-left));
+                padding-bottom: max(30px, env(safe-area-inset-bottom));
+            }
+            .workspace-layout .admin-navbar .container-fluid {
+                padding-right: max(12px, env(safe-area-inset-right)) !important;
+                padding-left: max(12px, env(safe-area-inset-left)) !important;
+            }
+            .brand-caption { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
             .admin-card > .table-responsive,
             .admin-card > .products-table-wrap { width: calc(100% - 20px); }
         }
@@ -387,7 +474,10 @@
 
             <div class="admin-user">
                 <span class="avatar">{{ strtoupper(substr(auth()->user()->name, 0, 1)) }}</span>
-                <span>{{ auth()->user()->name }}<br><small class="text-uppercase text-danger">{{ auth()->user()->role }}</small></span>
+                <span class="user-meta">
+                    <span>{{ auth()->user()->name }}</span>
+                    <span class="user-role">{{ auth()->user()->role === 'admin' ? 'ADMIN' : 'KASIR' }}</span>
+                </span>
                 <button
                     type="button"
                     id="logoutConfirmationTrigger"

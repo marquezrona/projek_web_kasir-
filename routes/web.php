@@ -4,6 +4,7 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\Admin\CashierController;
 use App\Http\Controllers\Admin\StoreSettingController;
 use App\Http\Controllers\Cashier\SaleController;
+use App\Http\Controllers\StrukController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\ProductController;
 use App\Models\Product;
@@ -15,10 +16,9 @@ Route::get('/', function () {
 });
 
 
-Route::resource('products', ProductController::class)->middleware(['auth', 'verified']);
-
 Route::middleware(['auth', 'verified', 'role:kasir'])->group(function () {
     Route::post('/kasir/transaksi', [SaleController::class, 'store'])->name('cashier.checkout');
+    Route::post('/kasir/riwayat/{sale}/struk', [StrukController::class, 'printReceipt'])->name('cashier.receipt.print');
     Route::get('/kasir/riwayat', [SaleController::class, 'index'])->name('cashier.riwayat');
 
     Route::get('/kasir', function () {
@@ -64,6 +64,8 @@ Route::get('/dashboard', function () {
 })->middleware(['auth', 'verified'])->name('dashboard');
 
 Route::middleware(['auth', 'verified', 'admin'])->group(function () {
+    Route::resource('products', ProductController::class);
+
     Route::get('/admin/pengaturan', [StoreSettingController::class, 'edit'])->name('admin.pengaturan');
     Route::put('/admin/pengaturan/toko', [StoreSettingController::class, 'updateStore'])->name('admin.pengaturan.toko');
     Route::put('/admin/pengaturan/akun', [StoreSettingController::class, 'updateAccount'])->name('admin.pengaturan.akun');

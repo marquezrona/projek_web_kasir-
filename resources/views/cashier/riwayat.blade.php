@@ -9,6 +9,14 @@
     </div>
 
     <section class="admin-card">
+        @if (session('status'))
+            <div class="alert alert-success m-3" role="status">{{ session('status') }}</div>
+        @endif
+
+        @if ($errors->has('receipt'))
+            <div class="alert alert-danger m-3" role="alert">{{ $errors->first('receipt') }}</div>
+        @endif
+
         <div class="admin-card-header">
             <div>
                 <h2>Transaksi Tersimpan</h2>
@@ -59,6 +67,7 @@
                             <th>Metode</th>
                             <th class="text-end">Total</th>
                             <th class="text-end">Kembali</th>
+                            <th>Aksi</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -87,6 +96,14 @@
                                 <td>{{ strtoupper($sale->payment_method) }}</td>
                                 <td class="text-end fw-semibold">Rp {{ number_format((float) $sale->total, 0, ',', '.') }}</td>
                                 <td class="text-end">Rp {{ number_format((float) $sale->change, 0, ',', '.') }}</td>
+                                <td>
+                                    <form method="POST" action="{{ route('cashier.receipt.print', $sale) }}">
+                                        @csrf
+                                        <button class="btn btn-primary btn-sm" type="submit">
+                                            <i class="bi bi-printer me-1" aria-hidden="true"></i>Cetak struk
+                                        </button>
+                                    </form>
+                                </td>
                             </tr>
                         @endforeach
                     </tbody>

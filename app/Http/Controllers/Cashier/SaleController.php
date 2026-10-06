@@ -171,12 +171,13 @@ class SaleController extends Controller
             return $sale;
         });
 
-        return response()->json([
-            'message' => 'Transaksi berhasil disimpan.',
-            'invoice' => $sale->invoice,
-            'total' => $sale->total,
-            'change' => $sale->change,
-            'history_url' => route('cashier.riwayat'),
-        ], 201);
+return response()->json([
+    'message' => 'Transaksi berhasil disimpan.',
+    'sale_id' => $sale->id,
+    'invoice' => $sale->invoice,
+    'total' => $sale->total,
+    'change' => $sale->change,
+    'history_url' => route('cashier.riwayat'),
+], 201);
     }
 }

@@ -17,7 +17,11 @@
 
                 * { box-sizing: border-box; }
 
-                html, body { min-height: 100%; }
+                html, body {
+                    width: 100%;
+                    height: 100%;
+                    min-height: 100%;
+                }
 
                 body {
                     margin: 0;
@@ -27,12 +31,14 @@
                 }
 
                 .login-page {
-                    min-height: 100vh;
-                    position: relative;
+                    position: fixed;
+                    inset: 0;
                     display: flex;
                     align-items: center;
                     justify-content: center;
-                    overflow: hidden;
+                    overflow-x: hidden;
+                    overflow-y: auto;
+                    -webkit-overflow-scrolling: touch;
                     padding: 90px 24px 72px;
                     background-image:
                         linear-gradient(90deg, rgba(9, 30, 39, .45), rgba(13, 28, 35, .16) 48%, rgba(9, 25, 30, .4)),

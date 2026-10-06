@@ -2,8 +2,10 @@
 
 namespace Tests\Feature;
 
+use App\Contracts\ReceiptPrinter;
 use App\Models\Product;
 use App\Models\Sale;
+use App\Models\StoreSetting;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Carbon;
@@ -147,7 +149,7 @@ class CashierTransactionTest extends TestCase
         $cashier = User::factory()->create(['role' => 'kasir']);
         $otherCashier = User::factory()->create(['role' => 'kasir']);
 
-        Sale::query()->create([
+        $ownSale = Sale::query()->create([
             'invoice' => 'INV-OWN-001',
             'cashier_id' => $cashier->id,
             'cashier_name' => $cashier->name,
@@ -181,7 +183,84 @@ class CashierTransactionTest extends TestCase
         $this->actingAs($cashier)->get(route('cashier.riwayat'))
             ->assertOk()
             ->assertSee('INV-OWN-001')
+            ->assertSee(route('cashier.receipt.print', $ownSale), false)
+            ->assertSee('Cetak struk')
             ->assertDontSee('INV-OTHER-001');
+    }
+
+    public function test_cashier_cannot_print_another_cashiers_receipt(): void
+    {
+        $cashier = User::factory()->create(['role' => 'kasir']);
+        $otherCashier = User::factory()->create(['role' => 'kasir']);
+        $sale = Sale::query()->create([
+            'invoice' => 'INV-OTHER-002',
+            'cashier_id' => $otherCashier->id,
+            'cashier_name' => $otherCashier->name,
+            'customer_type' => 'Umum',
+            'subtotal' => 2000,
+            'discount_percent' => 0,
+            'discount_amount' => 0,
+            'tax' => 0,
+            'other_fee' => 0,
+            'total' => 2000,
+            'paid' => 2000,
+            'change' => 0,
+            'payment_method' => 'tunai',
+        ]);
+
+        $this->actingAs($cashier)
+            ->post(route('cashier.receipt.print', $sale))
+            ->assertNotFound();
+
+        $admin = User::factory()->create(['role' => 'admin']);
+        $this->actingAs($admin)
+            ->post(route('cashier.receipt.print', $sale))
+            ->assertForbidden();
+    }
+
+    public function test_cashier_can_print_their_own_receipt(): void
+    {
+        $cashier = User::factory()->create(['role' => 'kasir']);
+        $sale = Sale::query()->create([
+            'invoice' => 'INV-PRINT-001',
+            'cashier_id' => $cashier->id,
+            'cashier_name' => $cashier->name,
+            'customer_type' => 'Umum',
+            'subtotal' => 3000,
+            'discount_percent' => 0,
+            'discount_amount' => 0,
+            'tax' => 0,
+            'other_fee' => 0,
+            'total' => 3000,
+            'paid' => 5000,
+            'change' => 2000,
+            'payment_method' => 'tunai',
+        ]);
+        $sale->items()->create([
+            'product_name' => 'Air Mineral',
+            'price' => 3000,
+            'quantity' => 1,
+            'subtotal' => 3000,
+        ]);
+
+        $printer = new class implements ReceiptPrinter
+        {
+            public ?string $printedInvoice = null;
+
+            public function print(Sale $sale, StoreSetting $store): void
+            {
+                $this->printedInvoice = $sale->invoice;
+            }
+        };
+        $this->app->instance(ReceiptPrinter::class, $printer);
+
+        $this->actingAs($cashier)
+            ->from(route('cashier.riwayat'))
+            ->post(route('cashier.receipt.print', $sale))
+            ->assertRedirect(route('cashier.riwayat'))
+            ->assertSessionHas('status', 'Struk transaksi INV-PRINT-001 berhasil dicetak.');
+
+        $this->assertSame('INV-PRINT-001', $printer->printedInvoice);
     }
 
     public function test_cashier_can_search_history_by_invoice_contact_and_product_name(): void

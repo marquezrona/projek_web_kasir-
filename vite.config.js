@@ -8,4 +8,11 @@ export default defineConfig({
             refresh: true,
         }),
     ],
+    server: {
+        host: '0.0.0.0', // <-- Tambahkan bagian server ini
+        port: 5173,      // (Opsional, pastikan port sesuai)
+        hmr: {
+            host: process.env.VITE_HMR_HOST || 'localhost',
+        },
+    },
 });

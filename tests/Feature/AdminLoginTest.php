@@ -216,6 +216,14 @@ class AdminLoginTest extends TestCase
         $this->actingAs($cashier)->get('/admin')->assertForbidden();
     }
 
+    public function test_cashier_cannot_manage_products(): void
+    {
+        $cashier = User::factory()->create(['role' => 'kasir']);
+
+        $this->actingAs($cashier)->get('/products')->assertForbidden();
+        $this->actingAs($cashier)->get('/products/create')->assertForbidden();
+    }
+
     public function test_admin_cannot_access_cashier_mode(): void
     {
         $admin = User::factory()->create(['role' => 'admin']);

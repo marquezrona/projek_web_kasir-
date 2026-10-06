@@ -16,7 +16,7 @@ class ProductImageUploadTest extends TestCase
     public function test_product_can_be_created_with_an_image(): void
     {
         Storage::fake('public');
-        $this->actingAs(User::factory()->create());
+        $this->actingAs(User::factory()->create(['role' => 'admin']));
 
         $response = $this->post('/products', [
             'name' => 'Beras 5kg',
