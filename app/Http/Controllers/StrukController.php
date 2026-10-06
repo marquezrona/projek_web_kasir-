@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Contracts\ReceiptPrinter;
 use App\Models\Sale;
 use App\Models\StoreSetting;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -16,7 +17,7 @@ class StrukController extends Controller
         Request $request,
         Sale $sale,
         ReceiptPrinter $receiptPrinter,
-    ): RedirectResponse {
+    ): JsonResponse|RedirectResponse {
         $sale = Sale::query()
             ->where('cashier_id', $request->user()->id)
             ->with('items')

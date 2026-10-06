@@ -37,20 +37,29 @@ class WindowsEscPosReceiptPrinter implements ReceiptPrinter
         // =========================
         $printer->setJustification(Printer::JUSTIFY_LEFT);
 
-        $printer->text("No. Transaksi : " . $sale->invoice . "\n");
+  $printer->text(sprintf(
+    "%-15s %15s\n",
+    "No. Transaksi :",
+    $sale->invoice
+));
+
         $printer->text(
-            "Tanggal       : " .
-            $sale->created_at->format('d-m-Y H:i') .
-            "\n"
+            sprintf(
+                "%-15s %15s\n",
+                "Tanggal       :",
+                $sale->created_at->format('d-m-Y H:i')
+            )
         );
 
         $printer->text(
-            "Pelanggan     : " .
-            $sale->customer_type .
-            "\n"
+            sprintf(
+                "%-15s %15s\n",
+                "Pelanggan     :",
+                $sale->customer_type
+            )
         );
 
-        $printer->text(str_repeat('-', 32) . "\n");
+        $printer->text(str_repeat('-', 42) . "\n");
 
 
         // =========================
@@ -74,121 +83,65 @@ class WindowsEscPosReceiptPrinter implements ReceiptPrinter
                 '.'
             );
 
-            $printer->text(
-                $item->quantity .
-                " x Rp " .
-                $harga .
-                "     Rp " .
-                $subtotal .
-                "\n"
-            );
+$kiri = $item->quantity . " x Rp " . $harga;
+$kanan = "Rp " . $subtotal;
+
+$spasi = max(1, 42 - strlen($kiri) - strlen($kanan));
+
+$printer->text(
+    $kiri . str_repeat(" ", $spasi) . $kanan . "\n"
+);
         }
 
 
         // =========================
         // TOTAL
         // =========================
-        $printer->text(str_repeat('-', 32) . "\n");
+        $printer->text(str_repeat('-', 42) . "\n");
+$printSummary = function (string $label, float $amount) use ($printer) {
 
-        $printer->text(
-            "Subtotal      Rp " .
-            number_format(
-                (float) $sale->subtotal,
-                0,
-                ',',
-                '.'
-            ) .
-            "\n"
-        );
+    $label = str_pad($label, 33, ' ', STR_PAD_RIGHT);
 
-        if ((float) $sale->discount_amount > 0) {
-            $printer->text(
-                "Diskon         Rp " .
-                number_format(
-                    (float) $sale->discount_amount,
-                    0,
-                    ',',
-                    '.'
-                ) .
-                "\n"
-            );
-        }
+    $printer->text(
+        $label .
+        'Rp ' .
+        number_format($amount, 0, ',', '.') .
+        "\n"
+    );
+};
 
-        if ((float) $sale->tax > 0) {
-            $printer->text(
-                "Pajak          Rp " .
-                number_format(
-                    (float) $sale->tax,
-                    0,
-                    ',',
-                    '.'
-                ) .
-                "\n"
-            );
-        }
+$printSummary('Subtotal', (float) $sale->subtotal);
 
-        if ((float) $sale->other_fee > 0) {
-            $printer->text(
-                "Biaya lain     Rp " .
-                number_format(
-                    (float) $sale->other_fee,
-                    0,
-                    ',',
-                    '.'
-                ) .
-                "\n"
-            );
-        }
+if ((float) $sale->discount_amount > 0) {
+    $printSummary('Diskon', (float) $sale->discount_amount);
+}
 
-        $printer->setEmphasis(true);
+if ((float) $sale->tax > 0) {
+    $printSummary('Pajak', (float) $sale->tax);
+}
 
-        $printer->text(
-            "TOTAL          Rp " .
-            number_format(
-                (float) $sale->total,
-                0,
-                ',',
-                '.'
-            ) .
-            "\n"
-        );
+if ((float) $sale->other_fee > 0) {
+    $printSummary('Biaya lain', (float) $sale->other_fee);
+}
 
-        $printer->setEmphasis(false);
+$printer->setEmphasis(true);
+$printSummary('TOTAL', (float) $sale->total);
+$printer->setEmphasis(false);
 
-        $printer->text(
-            "Bayar          Rp " .
-            number_format(
-                (float) $sale->paid,
-                0,
-                ',',
-                '.'
-            ) .
-            "\n"
-        );
-
-        $printer->text(
-            "Kembali        Rp " .
-            number_format(
-                (float) $sale->change,
-                0,
-                ',',
-                '.'
-            ) .
-            "\n"
-        );
-
+$printSummary('Bayar', (float) $sale->paid);
+$printSummary('Kembali', (float) $sale->change);
 
         // =========================
         // FOOTER
         // =========================
-        $printer->text(str_repeat('-', 32) . "\n");
+        $printer->text(str_repeat('-', 42) . "\n");
 
         $printer->setJustification(Printer::JUSTIFY_CENTER);
 
         $printer->text("Terima kasih\n");
         $printer->text("Atas kunjungan Anda\n");
 
-        $printer->feed(2);
+        $printer->feed(1);
 
         $printer->cut();
         $printer->close();

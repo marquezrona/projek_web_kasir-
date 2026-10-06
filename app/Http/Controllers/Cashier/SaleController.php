@@ -178,6 +178,6 @@ return response()->json([
     'total' => $sale->total,
     'change' => $sale->change,
     'history_url' => route('cashier.riwayat'),
-], 201);
+], 201); 
     }
 }

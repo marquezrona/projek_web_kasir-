@@ -263,6 +263,52 @@ class CashierTransactionTest extends TestCase
         $this->assertSame('INV-PRINT-001', $printer->printedInvoice);
     }
 
+    public function test_cashier_can_print_receipt_via_json_request(): void
+    {
+        $cashier = User::factory()->create(['role' => 'kasir']);
+        $sale = Sale::query()->create([
+            'invoice' => 'INV-PRINT-JSON',
+            'cashier_id' => $cashier->id,
+            'cashier_name' => $cashier->name,
+            'customer_type' => 'Umum',
+            'subtotal' => 5000,
+            'discount_percent' => 0,
+            'discount_amount' => 0,
+            'tax' => 0,
+            'other_fee' => 0,
+            'total' => 5000,
+            'paid' => 5000,
+            'change' => 0,
+            'payment_method' => 'tunai',
+        ]);
+        $sale->items()->create([
+            'product_name' => 'Biskuit',
+            'price' => 5000,
+            'quantity' => 1,
+            'subtotal' => 5000,
+        ]);
+
+        $printer = new class implements ReceiptPrinter
+        {
+            public ?string $printedInvoice = null;
+
+            public function print(Sale $sale, StoreSetting $store): void
+            {
+                $this->printedInvoice = $sale->invoice;
+            }
+        };
+        $this->app->instance(ReceiptPrinter::class, $printer);
+
+        $this->actingAs($cashier)
+            ->postJson(route('cashier.receipt.print', $sale))
+            ->assertOk()
+            ->assertJson([
+                'message' => 'Struk transaksi INV-PRINT-JSON berhasil dicetak.',
+            ]);
+
+        $this->assertSame('INV-PRINT-JSON', $printer->printedInvoice);
+    }
+
     public function test_cashier_can_search_history_by_invoice_contact_and_product_name(): void
     {
         $cashier = User::factory()->create(['role' => 'kasir']);
