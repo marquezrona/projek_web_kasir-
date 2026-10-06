@@ -412,8 +412,10 @@
 
         button.disabled = false;
     }
-        const qrisModalElement = document.querySelector('#qrisSimulationModal');
-        const qrisModal = qrisModalElement && typeof bootstrap !== 'undefined' ? bootstrap.Modal.getOrCreateInstance(qrisModalElement) : null;
+}
+
+const qrisModalElement = document.querySelector('#qrisSimulationModal');
+const qrisModal = qrisModalElement && typeof bootstrap !== 'undefined' ? bootstrap.Modal.getOrCreateInstance(qrisModalElement) : null;
 
 document.querySelector('#payButton').addEventListener('click', event => {
     if (!cart.length) {
