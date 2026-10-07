@@ -288,6 +288,7 @@
     <script>
         const products = JSON.parse(document.querySelector('#product-data').textContent);
         let cart = [];
+        let checkoutInProgress = false;
         const searchInput = document.querySelector('#searchProduct');
         const resultsBox = document.querySelector('#productResults');
         const paymentInput = document.querySelector('#payment');
@@ -316,6 +317,10 @@
         document.querySelector('#cancelButton').addEventListener('click', () => { if (!cart.length || confirm('Batalkan transaksi ini?')) { cart = []; document.querySelector('#payment').value = ''; renderCart(); } });
         document.querySelector('#holdButton').addEventListener('click', () => alert(cart.length ? 'Transaksi berhasil ditahan.' : 'Tidak ada transaksi untuk ditahan.'));
         async function submitCheckout(button) {
+            if (checkoutInProgress) {
+                return;
+            }
+
             const payment = Number(document.querySelector('#payment').value) || 0;
 
     if (!cart.length) {
@@ -326,6 +331,7 @@
         return alert('Uang pembayaran masih kurang.');
     }
 
+    checkoutInProgress = true;
     button.disabled = true;
 
     try {
@@ -410,6 +416,7 @@
             'Transaksi gagal disimpan. Silakan coba lagi.'
         );
 
+        checkoutInProgress = false;
         button.disabled = false;
     }
 }
@@ -434,7 +441,7 @@ document.querySelector('#payButton').addEventListener('click', event => {
         'Total     : ' + money(totalValue()) + '\n' +
         'Bayar     : ' + money(payment) + '\n' +
         'Kembali   : ' + money(Math.max(0, payment - totalValue())) + '\n\n' +
-        'Apakah transaksi sudah benar dan ingin mencetak struk?'
+        'Apakah transaksi sudah benar dan ingin melanjutkan?'
     );
 
     if (!confirmed) {

@@ -86,7 +86,7 @@ class WindowsEscPosReceiptPrinter implements ReceiptPrinter
 $kiri = $item->quantity . " x Rp " . $harga;
 $kanan = "Rp " . $subtotal;
 
-$spasi = max(1, 42 - strlen($kiri) - strlen($kanan));
+$spasi = max(1, 41 - strlen($kiri) - strlen($kanan));
 
 $printer->text(
     $kiri . str_repeat(" ", $spasi) . $kanan . "\n"
@@ -100,7 +100,7 @@ $printer->text(
         $printer->text(str_repeat('-', 42) . "\n");
 $printSummary = function (string $label, float $amount) use ($printer) {
 
-    $label = str_pad($label, 33, ' ', STR_PAD_RIGHT);
+    $label = str_pad($label, 32, ' ', STR_PAD_RIGHT);
 
     $printer->text(
         $label .
