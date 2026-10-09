@@ -64,23 +64,7 @@ Contoh berikut menggunakan PowerShell di Windows.
    Copy-Item .env.example .env
    ```
 
-3. **Buat database MySQL**, lalu sesuaikan konfigurasi berikut pada file `.env`:
-
-   ```dotenv
-   APP_NAME="Sistem Kasir Toko Jazzel"
-   APP_URL=http://127.0.0.1:8000
-
-   DB_CONNECTION=mysql
-   DB_HOST=127.0.0.1
-   DB_PORT=3306
-   DB_DATABASE=wejazzel
-   DB_USERNAME=root
-   DB_PASSWORD=
-   ```
-
-   Pastikan database dengan nama yang diatur pada `DB_DATABASE` sudah dibuat sebelum menjalankan migrasi.
-
-4. **Buat application key, jalankan migrasi dan data awal, lalu siapkan penyimpanan file publik**
+3. **Buat application key, jalankan migrasi dan data awal, lalu siapkan penyimpanan file publik**
 
    ```powershell
    php artisan key:generate
@@ -90,14 +74,14 @@ Contoh berikut menggunakan PowerShell di Windows.
 
    Seeder membuat akun contoh untuk pengembangan lokal. Ganti kata sandi bawaan dan jangan gunakan akun contoh tersebut untuk deployment.
 
-5. **Pasang dependency frontend dan build aset**
+4. **Pasang dependency frontend dan build aset**
 
    ```powershell
    npm install
    npm run build
    ```
 
-6. **Jalankan server lokal**
+5. **Jalankan server lokal**
 
    ```powershell
    php artisan serve
