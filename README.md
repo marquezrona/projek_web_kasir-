@@ -1,59 +1,134 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+<div align="center">
+  <img src="public/assets/img/jazzel-monogram.png" alt="Logo Toko Jazzel" width="140">
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+  # Sistem Kasir Toko Jazzel
 
-## About Laravel
+  Aplikasi kasir berbasis web untuk mengelola produk, transaksi penjualan, dan laporan toko.
+</div>
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+---
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+## Tentang Proyek
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+Sistem Kasir Toko Jazzel membantu admin dan kasir menjalankan kegiatan toko melalui satu aplikasi. Admin dapat mengelola barang dan akun kasir, sedangkan kasir dapat membuat transaksi, menahan transaksi untuk dilanjutkan, serta melihat riwayat dan laporan penjualannya.
 
-## Learning Laravel
+## Fitur
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework. You can also check out [Laravel Learn](https://laravel.com/learn), where you will be guided through building a modern Laravel application.
+- **Dashboard admin** — ringkasan persediaan, barang aktif, stok rendah, dan grafik penjualan.
+- **Kelola barang** — tambah, lihat, ubah, hapus, cari barang, dan atur status aktif.
+- **Manajemen kasir** — admin dapat membuat akun kasir.
+- **Transaksi kasir** — pencarian barang, pengelolaan keranjang, pembayaran tunai, QRIS simulasi, dan transfer.
+- **Transaksi tertahan** — simpan transaksi sementara di browser dan lanjutkan pembayarannya nanti.
+- **Riwayat transaksi** — pencarian dan filter riwayat transaksi.
+- **Laporan penjualan** — ringkasan dan filter laporan berdasarkan hari, minggu, dan bulan.
+- **Pengaturan toko** — ubah identitas toko dan logo.
+- **Cetak struk** — mendukung printer thermal ESC/POS pada Windows.
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+> Pembayaran QRIS di aplikasi ini merupakan **simulasi**, bukan pemrosesan pembayaran sungguhan. Transaksi tertahan disimpan di browser yang digunakan dan tidak otomatis tersedia di perangkat lain.
 
-## Laravel Sponsors
+## Teknologi
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+- PHP 8.2+
+- Laravel 12
+- MySQL
+- Node.js dan npm
+- Vite
+- Tailwind CSS
+- Alpine.js
+- [`mike42/escpos-php`](https://github.com/mike42/escpos-php) untuk cetak struk
 
-### Premium Partners
+## Persyaratan
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+Pastikan perangkat pengembangan sudah memiliki:
 
-## Contributing
+- PHP 8.2 atau lebih baru beserta ekstensi yang dibutuhkan Laravel.
+- Composer.
+- MySQL.
+- Node.js dan npm.
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+## Instalasi dan Menjalankan Aplikasi
 
-## Code of Conduct
+Contoh berikut menggunakan PowerShell di Windows.
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+1. **Clone repository dan masuk ke folder proyek**
 
-## Security Vulnerabilities
+   ```powershell
+   git clone https://github.com/marquezrona/projek_web_kasir-.git
+   cd projek_web_kasir-
+   ```
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+2. **Pasang dependency PHP dan siapkan konfigurasi**
 
-## License
+   ```powershell
+   composer install
+   Copy-Item .env.example .env
+   ```
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+3. **Buat database MySQL**, lalu sesuaikan konfigurasi berikut pada file `.env`:
+
+   ```dotenv
+   APP_NAME="Sistem Kasir Toko Jazzel"
+   APP_URL=http://127.0.0.1:8000
+
+   DB_CONNECTION=mysql
+   DB_HOST=127.0.0.1
+   DB_PORT=3306
+   DB_DATABASE=wejazzel
+   DB_USERNAME=root
+   DB_PASSWORD=
+   ```
+
+   Pastikan database dengan nama yang diatur pada `DB_DATABASE` sudah dibuat sebelum menjalankan migrasi.
+
+4. **Buat application key, jalankan migrasi dan data awal, lalu siapkan penyimpanan file publik**
+
+   ```powershell
+   php artisan key:generate
+   php artisan migrate --seed
+   php artisan storage:link
+   ```
+
+   Seeder membuat akun contoh untuk pengembangan lokal. Ganti kata sandi bawaan dan jangan gunakan akun contoh tersebut untuk deployment.
+
+5. **Pasang dependency frontend dan build aset**
+
+   ```powershell
+   npm install
+   npm run build
+   ```
+
+6. **Jalankan server lokal**
+
+   ```powershell
+   php artisan serve
+   ```
+
+   Buka alamat yang ditampilkan oleh Artisan, biasanya [http://127.0.0.1:8000](http://127.0.0.1:8000).
+
+Untuk menjalankan Vite dalam mode pengembangan, gunakan terminal terpisah:
+
+```powershell
+npm run dev
+```
+
+## Cetak Struk
+
+Aplikasi mencetak struk menggunakan printer Windows yang sudah terpasang dan dibagikan. Atur nama printer Windows pada `.env`:
+
+```dotenv
+RECEIPT_PRINTER=POS-80
+```
+
+Ganti `POS-80` dengan nama printer atau nama share yang sesuai dengan konfigurasi Windows. Tanpa printer yang terhubung, transaksi tetap dapat disimpan, tetapi pencetakan struk tidak akan berhasil.
+
+## Pengujian
+
+Jalankan rangkaian pengujian aplikasi dengan:
+
+```powershell
+php artisan test
+```
+
+## Lisensi
+
+Proyek ini menggunakan lisensi MIT.
