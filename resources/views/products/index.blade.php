@@ -19,7 +19,7 @@
             font-weight: 750;
             letter-spacing: -.03em;
         }
-        .products-heading p { margin: 4px 0 0; color: #5f6d82; font-size: 14px; }
+        .products-heading p { margin: 4px 0 0; color: #766d6f; font-size: 14px; }
         .products-card { overflow: hidden; }
         .products-card-header {
             display: flex;
@@ -31,7 +31,7 @@
             background: rgba(248,250,252,.92);
         }
         .products-card-header h2 { margin: 0; color: var(--ink); font-size: 16px; font-weight: 750; }
-        .products-count { color: #5f6d82; font-size: 13px; }
+        .products-count { color: #766d6f; font-size: 13px; }
         .products-search {
             display: flex;
             align-items: center;
@@ -42,12 +42,12 @@
         }
         .products-search .form-control { max-width: 440px; }
         .products-search .btn { flex: 0 0 auto; }
-        .products-search-hint { color: #65748b; font-size: 13px; }
+        .products-search-hint { color: #766d6f; font-size: 13px; }
         .products-table-wrap { overflow-x: auto; }
         .products-table { min-width: 760px; }
         .products-table thead th { padding-top: 13px; padding-bottom: 13px; }
         .products-table tbody tr { transition: background-color .15s ease; }
-        .products-table tbody tr:hover { background: #f5f9fb; }
+        .products-table tbody tr:hover { background: #faf6f5; }
         .products-table tbody td { padding-top: 13px; padding-bottom: 13px; }
         .product-cell { display: flex; min-width: 210px; align-items: center; gap: 12px; }
         .product-thumb {
@@ -57,24 +57,24 @@
             flex: 0 0 48px;
             place-items: center;
             overflow: hidden;
-            border: 1px solid #e1e8ee;
+            border: 1px solid #e9dada;
             border-radius: 9px;
-            color: #698091;
-            background: #f3f7f9;
+            color: #766d6f;
+            background: #f8efef;
             font-size: 18px;
         }
         .product-thumb img { width: 100%; height: 100%; object-fit: cover; }
-        .product-name { display: block; color: #25364c; font-size: 14px; font-weight: 700; }
-        .product-description { display: block; max-width: 280px; margin-top: 3px; color: #65748b; font-size: 12px; }
-        .product-price { color: #07536a; font-weight: 700; white-space: nowrap; }
+        .product-name { display: block; color: #3a3334; font-size: 14px; font-weight: 700; }
+        .product-description { display: block; max-width: 280px; margin-top: 3px; color: #766d6f; font-size: 12px; }
+        .product-price { color: #8d2a22; font-weight: 700; white-space: nowrap; }
         .stock-badge {
             display: inline-flex;
             min-width: 42px;
             justify-content: center;
             padding: 5px 9px;
             border-radius: 99px;
-            color: #34445b;
-            background: #eef2f7;
+            color: #51474a;
+            background: #f2eaea;
             font-weight: 700;
         }
         .stock-badge.low { color: #a34b10; background: #fff1df; }
@@ -92,14 +92,14 @@
             text-decoration: none;
             transition: background-color .15s ease, color .15s ease, border-color .15s ease;
         }
-        .product-action.view { color: #087f8c; background: #e3f5f5; }
-        .product-action.view:hover { color: #fff; background: #087f8c; }
+        .product-action.view { color: #8d2a22; background: #f4e6e4; }
+        .product-action.view:hover { color: #fff; background: #8d2a22; }
         .product-action.edit { color: #9a6500; background: #fff3d8; }
         .product-action.edit:hover { color: #fff; background: #a96f00; }
         .product-action.delete { color: #b83c49; background: #fff0ef; }
         .product-action.delete:hover { color: #fff; background: #b83c49; }
-        .products-empty { padding: 52px 20px !important; color: #5f6d82 !important; text-align: center; }
-        .products-empty i { display: block; margin-bottom: 10px; color: #8da1ae; font-size: 28px; }
+        .products-empty { padding: 52px 20px !important; color: #766d6f !important; text-align: center; }
+        .products-empty i { display: block; margin-bottom: 10px; color: #9b8b6f; font-size: 28px; }
         .products-pagination { padding: 16px 18px; border-top: 1px solid var(--line); }
         .products-pagination nav { margin: 0; }
         .products-pagination p { margin-bottom: 0; }
@@ -140,7 +140,7 @@
             <div class="products-card-header">
                 <h2 id="products-table-title">Daftar Barang</h2>
                 <span class="products-count">
-                    {{ $products->total() }} {{ $search !== '' ? 'hasil pencarian' : 'barang terdaftar' }}
+                    {{ $products->count() }} {{ $search !== '' ? 'hasil pencarian' : 'barang terdaftar' }}
                 </span>
             </div>
 
@@ -178,7 +178,7 @@
                     <tbody>
                         @forelse($products as $product)
                             <tr>
-                                <td class="text-muted">{{ $products->firstItem() + $loop->index }}</td>
+                                <td class="text-muted">{{ $loop->iteration }}</td>
                                 <td>
                                     <div class="product-cell">
                                         <span class="product-thumb">
@@ -235,12 +235,6 @@
                     </tbody>
                 </table>
             </div>
-
-            @if($products->hasPages())
-                <div class="products-pagination">
-                    {{ $products->links() }}
-                </div>
-            @endif
 
         </section>
     </div>

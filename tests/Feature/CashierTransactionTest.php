@@ -32,7 +32,6 @@ class CashierTransactionTest extends TestCase
                 'quantity' => 2,
                 'price' => 1,
             ]],
-            'customer_type' => 'Umum',
             'discount_percent' => 0,
             'discount_amount' => 0,
             'tax' => 0,
@@ -47,6 +46,8 @@ class CashierTransactionTest extends TestCase
 
         $sale = Sale::query()->with('items')->firstOrFail();
         $this->assertSame($cashier->id, $sale->cashier_id);
+        $this->assertSame('Umum', $sale->customer_type);
+        $this->assertNull($sale->customer_contact);
         $this->assertSame('Beras', $sale->items->first()->product_name);
         $this->assertSame(2, $sale->items->first()->quantity);
         $this->assertDatabaseHas('products', ['id' => $product->id, 'stock' => 3]);
@@ -362,6 +363,59 @@ class CashierTransactionTest extends TestCase
         }
     }
 
+    public function test_cashier_sales_report_filters_by_named_month_and_shows_month_and_lifetime_totals(): void
+    {
+        $cashier = User::factory()->create(['role' => 'kasir']);
+        $otherCashier = User::factory()->create(['role' => 'kasir']);
+        $monthNames = [
+            'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
+            'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember',
+        ];
+        $this->createReportSale($cashier, 'INV-REPORT-CURRENT', 30000, now());
+        $this->createReportSale($cashier, 'INV-REPORT-OLDER', 20000, now()->subMonth()->startOfMonth()->addDays(2));
+        $this->createReportSale($otherCashier, 'INV-REPORT-OTHER', 90000, now());
+
+        $this->actingAs($cashier)
+            ->get(route('cashier.laporan', [
+                'period' => 'month',
+                'month' => now()->month,
+                'year' => now()->year,
+            ]))
+            ->assertOk()
+            ->assertSee('Penjualan Bulan Ini')
+            ->assertSee('Penjualan Selama Ini')
+            ->assertSee('Rp 30.000')
+            ->assertSee('Rp 50.000')
+            ->assertSee($monthNames[now()->month - 1].' '.now()->year)
+            ->assertSee('INV-REPORT-CURRENT')
+            ->assertDontSee('INV-REPORT-OLDER')
+            ->assertDontSee('INV-REPORT-OTHER');
+    }
+
+    public function test_cashier_sales_report_filters_by_selected_iso_week(): void
+    {
+        $cashier = User::factory()->create(['role' => 'kasir']);
+        $otherCashier = User::factory()->create(['role' => 'kasir']);
+        $weekStart = now()->startOfWeek(Carbon::MONDAY);
+        $this->createReportSale($cashier, 'INV-WEEK-FIRST', 12000, $weekStart->copy()->addHours(10));
+        $this->createReportSale($cashier, 'INV-WEEK-LAST', 18000, $weekStart->copy()->addDays(5)->addHours(12));
+        $this->createReportSale($cashier, 'INV-WEEK-OLDER', 25000, $weekStart->copy()->subDay());
+        $this->createReportSale($otherCashier, 'INV-WEEK-OTHER', 35000, $weekStart->copy()->addDays(2));
+
+        $this->actingAs($cashier)
+            ->get(route('cashier.laporan', [
+                'period' => 'week',
+                'week' => (int) now()->format('W'),
+                'year' => (int) now()->format('o'),
+            ]))
+            ->assertOk()
+            ->assertSee('Minggu ke-'.now()->format('W'))
+            ->assertSee('INV-WEEK-FIRST')
+            ->assertSee('INV-WEEK-LAST')
+            ->assertDontSee('INV-WEEK-OLDER')
+            ->assertDontSee('INV-WEEK-OTHER');
+    }
+
     public function test_cashier_history_can_be_filtered_by_day_week_month_and_year(): void
     {
         $this->travelTo(Carbon::parse('2026-10-05 12:00:00'));
@@ -423,6 +477,7 @@ class CashierTransactionTest extends TestCase
 
     public function test_admin_sales_report_uses_saved_transactions_from_all_cashiers(): void
     {
+        $this->travelTo(Carbon::parse('2026-10-09 12:00:00'));
         $admin = User::factory()->create(['role' => 'admin']);
         $cashier = User::factory()->create(['role' => 'kasir', 'name' => 'Kasir Satu']);
         $otherCashier = User::factory()->create(['role' => 'kasir', 'name' => 'Kasir Dua']);
@@ -460,16 +515,70 @@ class CashierTransactionTest extends TestCase
         ]);
         $historicalSale->forceFill(['created_at' => now()->subDay()])->save();
 
-        $this->actingAs($admin)->get(route('admin.laporan'))
+        $this->actingAs($admin)->get(route('admin.laporan', [
+            'period' => 'month',
+            'month' => now()->month,
+            'year' => now()->year,
+        ]))
             ->assertOk()
             ->assertSee('Rp 25.000')
+            ->assertSee('Rp 40.000')
+            ->assertSee('Penjualan Selama Ini')
             ->assertSee('INV-ADMIN-REPORT-001')
             ->assertSee('Kasir Satu')
             ->assertSee('TUNAI')
             ->assertSee('INV-ADMIN-REPORT-002')
             ->assertSee('Kasir Dua')
             ->assertSee('QRIS')
-            ->assertSee('2 transaksi tersimpan');
+            ->assertSee('2 transaksi');
+    }
+
+    public function test_admin_sales_report_filters_all_cashiers_sales_by_day_week_and_month(): void
+    {
+        $this->travelTo(Carbon::parse('2026-10-09 12:00:00'));
+        $admin = User::factory()->create(['role' => 'admin']);
+        $cashier = User::factory()->create(['role' => 'kasir', 'name' => 'Kasir Satu']);
+        $otherCashier = User::factory()->create(['role' => 'kasir', 'name' => 'Kasir Dua']);
+        $this->createReportSale($cashier, 'INV-ADMIN-DAY', 10000, now());
+        $this->createReportSale($otherCashier, 'INV-ADMIN-WEEK', 20000, now()->subDays(2));
+        $this->createReportSale($cashier, 'INV-ADMIN-MONTH', 30000, now()->subDays(5));
+        $this->createReportSale($otherCashier, 'INV-ADMIN-OLDER', 40000, now()->subDays(9));
+
+        $this->actingAs($admin)
+            ->get(route('admin.laporan', ['period' => 'day', 'date' => today()->toDateString()]))
+            ->assertOk()
+            ->assertSee('INV-ADMIN-DAY')
+            ->assertDontSee('INV-ADMIN-WEEK')
+            ->assertDontSee('INV-ADMIN-MONTH')
+            ->assertDontSee('INV-ADMIN-OLDER')
+            ->assertSee('1 transaksi');
+
+        $this->actingAs($admin)
+            ->get(route('admin.laporan', [
+                'period' => 'week',
+                'week' => (int) now()->format('W'),
+                'year' => (int) now()->format('o'),
+            ]))
+            ->assertOk()
+            ->assertSee('INV-ADMIN-DAY')
+            ->assertSee('INV-ADMIN-WEEK')
+            ->assertDontSee('INV-ADMIN-MONTH')
+            ->assertDontSee('INV-ADMIN-OLDER')
+            ->assertSee('Rp 30.000');
+
+        $this->actingAs($admin)
+            ->get(route('admin.laporan', [
+                'period' => 'month',
+                'month' => now()->month,
+                'year' => now()->year,
+            ]))
+            ->assertOk()
+            ->assertSee('INV-ADMIN-DAY')
+            ->assertSee('INV-ADMIN-WEEK')
+            ->assertSee('INV-ADMIN-MONTH')
+            ->assertDontSee('INV-ADMIN-OLDER')
+            ->assertSee('Rp 60.000')
+            ->assertSee('Rp 100.000');
     }
 
     public function test_admin_dashboard_graph_shows_seven_days_of_saved_sales_data(): void
@@ -507,5 +616,31 @@ class CashierTransactionTest extends TestCase
             ->assertSee('7 hari terakhir · Rp 44.000')
             ->assertSee(today()->format('d/m').': Rp 35.000')
             ->assertDontSee('Rp 114.000');
+    }
+
+    private function createReportSale(User $cashier, string $invoice, int $total, Carbon $createdAt): Sale
+    {
+        $sale = Sale::query()->create([
+            'invoice' => $invoice,
+            'cashier_id' => $cashier->id,
+            'cashier_name' => $cashier->name,
+            'customer_type' => 'Umum',
+            'subtotal' => $total,
+            'discount_percent' => 0,
+            'discount_amount' => 0,
+            'tax' => 0,
+            'other_fee' => 0,
+            'total' => $total,
+            'paid' => $total,
+            'change' => 0,
+            'payment_method' => 'tunai',
+        ]);
+
+        $sale->forceFill([
+            'created_at' => $createdAt,
+            'updated_at' => $createdAt,
+        ])->save();
+
+        return $sale;
     }
 }

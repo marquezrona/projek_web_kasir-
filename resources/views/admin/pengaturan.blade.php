@@ -17,8 +17,8 @@
             background: transparent;
             cursor: pointer;
         }
-        .password-toggle:hover, .password-toggle:focus-visible { color: #07536a; }
-        .password-toggle:focus-visible { outline: 2px solid #07536a; outline-offset: 2px; }
+        .password-toggle:hover, .password-toggle:focus-visible { color: #8d2a22; }
+        .password-toggle:focus-visible { outline: 2px solid #b94245; outline-offset: 2px; }
     </style>
 @endpush
 

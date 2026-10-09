@@ -10,6 +10,9 @@ use App\Http\Controllers\ProductController;
 use App\Models\Product;
 use App\Models\Sale;
 use App\Models\User;
+use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
+use Illuminate\Validation\ValidationException;
 
 Route::get('/', function () {
     return redirect()->route('login');
@@ -33,20 +36,125 @@ Route::middleware(['auth', 'verified', 'role:kasir'])->group(function () {
         ]);
     })->name('cashier.transaksi');
 
-    Route::get('/kasir/produk', function () {
+    Route::get('/kasir/produk', function (Request $request) {
+        $filters = $request->validate([
+            'search' => ['nullable', 'string', 'max:100'],
+        ]);
+        $search = trim($filters['search'] ?? '');
+
+        $products = Product::query()
+            ->where('is_active', true)
+            ->when($search !== '', function ($query) use ($search) {
+                $query->where(function ($query) use ($search) {
+                    $query->where('name', 'like', "%{$search}%")
+                        ->orWhere('category', 'like', "%{$search}%");
+                });
+            })
+            ->orderBy('name')
+            ->get();
+
         return view('cashier.produk', [
-            'products' => Product::query()->where('is_active', true)->orderBy('name')->get(),
+            'products' => $products,
+            'search' => $search,
         ]);
     })->name('cashier.produk');
 
-    Route::get('/kasir/laporan', function () {
+    Route::get('/kasir/laporan', function (Request $request) {
+        $cashierId = $request->user()->id;
+        $currentYear = now()->year;
+        $firstSaleDate = Sale::query()
+            ->where('cashier_id', $cashierId)
+            ->oldest('created_at')
+            ->value('created_at');
+        $firstYear = $firstSaleDate ? Carbon::parse($firstSaleDate)->year : $currentYear;
+        $years = collect(range(min($firstYear, $currentYear), $currentYear))
+            ->reverse()
+            ->values();
+
+        $filters = $request->validate([
+            'period' => ['nullable', 'in:day,week,month'],
+            'date' => ['nullable', 'date_format:Y-m-d'],
+            'week' => ['nullable', 'integer', 'between:1,53'],
+            'month' => ['nullable', 'integer', 'between:1,12'],
+            'year' => ['nullable', 'integer', 'between:1900,'.$currentYear],
+        ]);
+
+        $period = $filters['period'] ?? 'day';
+        $selectedDate = $filters['date'] ?? today()->toDateString();
+        $selectedMonth = (int) ($filters['month'] ?? now()->month);
+        $selectedYear = (int) ($filters['year'] ?? $currentYear);
+        $selectedWeek = (int) ($filters['week'] ?? now()->format('W'));
+        $start = match ($period) {
+            'week' => Carbon::now()->setISODate($selectedYear, $selectedWeek, 1)->startOfDay(),
+            'month' => Carbon::create($selectedYear, $selectedMonth, 1)->startOfDay(),
+            default => Carbon::parse($selectedDate)->startOfDay(),
+        };
+        $end = match ($period) {
+            'week' => $start->copy()->endOfWeek(Carbon::SUNDAY),
+            'month' => $start->copy()->endOfMonth()->endOfDay(),
+            default => $start->copy()->endOfDay(),
+        };
+
+        if ($period === 'week' && (int) $start->format('o') !== $selectedYear) {
+            throw ValidationException::withMessages([
+                'week' => 'Minggu yang dipilih tidak tersedia pada tahun tersebut.',
+            ]);
+        }
+
+        $monthNames = [
+            1 => 'Januari', 2 => 'Februari', 3 => 'Maret', 4 => 'April',
+            5 => 'Mei', 6 => 'Juni', 7 => 'Juli', 8 => 'Agustus',
+            9 => 'September', 10 => 'Oktober', 11 => 'November', 12 => 'Desember',
+        ];
+        $weekOptions = [];
+        for ($weekNumber = 1; $weekNumber <= 53; $weekNumber++) {
+            $weekStart = Carbon::now()->setISODate($selectedYear, $weekNumber, 1)->startOfDay();
+            if ((int) $weekStart->format('o') !== $selectedYear) {
+                break;
+            }
+
+            $weekEnd = $weekStart->copy()->endOfWeek(Carbon::SUNDAY);
+            $weekOptions[$weekNumber] = sprintf(
+                'Minggu ke-%d (%s–%s)',
+                $weekNumber,
+                $weekStart->format('d/m'),
+                $weekEnd->format('d/m/Y'),
+            );
+        }
+
+        if ($period === 'week' && ! array_key_exists($selectedWeek, $weekOptions)) {
+            throw ValidationException::withMessages([
+                'week' => 'Minggu yang dipilih tidak tersedia pada tahun tersebut.',
+            ]);
+        }
+
+        $cashierSales = Sale::query()->where('cashier_id', $cashierId);
+        $filteredSales = (clone $cashierSales)->whereBetween('created_at', [$start, $end]);
+        $periodSales = (clone $filteredSales)->sum('total');
+        $transactionCount = (clone $filteredSales)->count();
+        $periodLabel = match ($period) {
+            'week' => $weekOptions[$selectedWeek],
+            'month' => $monthNames[$selectedMonth].' '.$selectedYear,
+            default => $start->format('d').' '.$monthNames[(int) $start->format('n')].' '.$start->format('Y'),
+        };
+
         return view('cashier.laporan', [
-            'products' => Product::query()->where('is_active', true)->orderBy('name')->limit(6)->get(),
-            'totalSales' => 0,
-            'transactions' => [
-                ['invoice' => '#INV-101', 'customer' => 'Umum', 'total' => 25000, 'status' => 'Lunas'],
-                ['invoice' => '#INV-102', 'customer' => 'Member', 'total' => 47000, 'status' => 'Lunas'],
-            ],
+            'totalSales' => (clone $cashierSales)->whereDate('created_at', today())->sum('total'),
+            'monthlySales' => (clone $cashierSales)->whereBetween('created_at', [now()->startOfMonth(), now()->endOfMonth()])->sum('total'),
+            'lifetimeSales' => (clone $cashierSales)->sum('total'),
+            'periodSales' => $periodSales,
+            'transactionCount' => $transactionCount,
+            'productsCount' => Product::query()->where('is_active', true)->count(),
+            'transactions' => $filteredSales->latest()->paginate(25)->withQueryString(),
+            'period' => $period,
+            'selectedDate' => $selectedDate,
+            'selectedMonth' => $selectedMonth,
+            'selectedYear' => $selectedYear,
+            'selectedWeek' => $selectedWeek,
+            'years' => $years,
+            'monthNames' => $monthNames,
+            'weekOptions' => $weekOptions,
+            'periodLabel' => $periodLabel,
         ]);
     })->name('cashier.laporan');
 });
@@ -111,12 +219,97 @@ Route::middleware(['auth', 'verified', 'admin'])->group(function () {
         ]);
     })->name('admin.kasir');
 
-    Route::get('/admin/laporan', function () {
+    Route::get('/admin/laporan', function (Request $request) {
+        $currentYear = now()->year;
+        $firstSaleDate = Sale::query()->oldest('created_at')->value('created_at');
+        $firstYear = $firstSaleDate ? Carbon::parse($firstSaleDate)->year : $currentYear;
+        $years = collect(range(min($firstYear, $currentYear), $currentYear))
+            ->reverse()
+            ->values();
+
+        $filters = $request->validate([
+            'period' => ['nullable', 'in:day,week,month'],
+            'date' => ['nullable', 'date_format:Y-m-d'],
+            'week' => ['nullable', 'integer', 'between:1,53'],
+            'month' => ['nullable', 'integer', 'between:1,12'],
+            'year' => ['nullable', 'integer', 'between:1900,'.$currentYear],
+        ]);
+
+        $period = $filters['period'] ?? 'day';
+        $selectedDate = $filters['date'] ?? today()->toDateString();
+        $selectedMonth = (int) ($filters['month'] ?? now()->month);
+        $selectedYear = (int) ($filters['year'] ?? $currentYear);
+        $selectedWeek = (int) ($filters['week'] ?? now()->format('W'));
+        $start = match ($period) {
+            'week' => Carbon::now()->setISODate($selectedYear, $selectedWeek, 1)->startOfDay(),
+            'month' => Carbon::create($selectedYear, $selectedMonth, 1)->startOfDay(),
+            default => Carbon::parse($selectedDate)->startOfDay(),
+        };
+        $end = match ($period) {
+            'week' => $start->copy()->endOfWeek(Carbon::SUNDAY),
+            'month' => $start->copy()->endOfMonth()->endOfDay(),
+            default => $start->copy()->endOfDay(),
+        };
+
+        if ($period === 'week' && (int) $start->format('o') !== $selectedYear) {
+            throw ValidationException::withMessages([
+                'week' => 'Minggu yang dipilih tidak tersedia pada tahun tersebut.',
+            ]);
+        }
+
+        $monthNames = [
+            1 => 'Januari', 2 => 'Februari', 3 => 'Maret', 4 => 'April',
+            5 => 'Mei', 6 => 'Juni', 7 => 'Juli', 8 => 'Agustus',
+            9 => 'September', 10 => 'Oktober', 11 => 'November', 12 => 'Desember',
+        ];
+        $weekOptions = [];
+        for ($weekNumber = 1; $weekNumber <= 53; $weekNumber++) {
+            $weekStart = Carbon::now()->setISODate($selectedYear, $weekNumber, 1)->startOfDay();
+            if ((int) $weekStart->format('o') !== $selectedYear) {
+                break;
+            }
+
+            $weekEnd = $weekStart->copy()->endOfWeek(Carbon::SUNDAY);
+            $weekOptions[$weekNumber] = sprintf(
+                'Minggu ke-%d (%s–%s)',
+                $weekNumber,
+                $weekStart->format('d/m'),
+                $weekEnd->format('d/m/Y'),
+            );
+        }
+
+        if ($period === 'week' && ! array_key_exists($selectedWeek, $weekOptions)) {
+            throw ValidationException::withMessages([
+                'week' => 'Minggu yang dipilih tidak tersedia pada tahun tersebut.',
+            ]);
+        }
+
+        $filteredSales = Sale::query()->whereBetween('created_at', [$start, $end]);
+        $periodSales = (clone $filteredSales)->sum('total');
+        $transactionCount = (clone $filteredSales)->count();
+        $periodLabel = match ($period) {
+            'week' => $weekOptions[$selectedWeek],
+            'month' => $monthNames[$selectedMonth].' '.$selectedYear,
+            default => $start->format('d').' '.$monthNames[(int) $start->format('n')].' '.$start->format('Y'),
+        };
+
         return view('admin.laporan', [
-            'totalProducts' => Product::count(),
             'totalSales' => Sale::query()->whereDate('created_at', today())->sum('total'),
-            'todayTransactionCount' => Sale::query()->whereDate('created_at', today())->count(),
-            'transactions' => Sale::query()->latest()->paginate(10),
+            'monthlySales' => Sale::query()->whereBetween('created_at', [now()->startOfMonth(), now()->endOfMonth()])->sum('total'),
+            'lifetimeSales' => Sale::query()->sum('total'),
+            'periodSales' => $periodSales,
+            'transactionCount' => $transactionCount,
+            'productsCount' => Product::query()->where('is_active', true)->count(),
+            'transactions' => $filteredSales->latest()->paginate(25)->withQueryString(),
+            'period' => $period,
+            'selectedDate' => $selectedDate,
+            'selectedMonth' => $selectedMonth,
+            'selectedYear' => $selectedYear,
+            'selectedWeek' => $selectedWeek,
+            'years' => $years,
+            'monthNames' => $monthNames,
+            'weekOptions' => $weekOptions,
+            'periodLabel' => $periodLabel,
         ]);
     })->name('admin.laporan');
 });

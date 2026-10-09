@@ -17,8 +17,8 @@
             background: transparent;
             cursor: pointer;
         }
-        .cashier-password-toggle:hover, .cashier-password-toggle:focus-visible { color: #07536a; }
-        .cashier-password-toggle:focus-visible { outline: 2px solid #07536a; outline-offset: 2px; }
+        .cashier-password-toggle:hover, .cashier-password-toggle:focus-visible { color: #8d2a22; }
+        .cashier-password-toggle:focus-visible { outline: 2px solid #b94245; outline-offset: 2px; }
     </style>
 @endpush
 

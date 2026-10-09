@@ -28,6 +28,6 @@ class StoreSetting extends Model
     {
         return $this->logo_path
             ? Storage::disk('public')->url($this->logo_path)
-            : asset('assets/img/jazzel-logo.jpg');
+            : asset('assets/img/jazzel-monogram.png');
     }
 }

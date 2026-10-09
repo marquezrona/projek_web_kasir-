@@ -26,8 +26,7 @@ class ProductController extends Controller
                 });
             })
             ->latest()
-            ->paginate(10)
-            ->withQueryString();
+            ->get();
 
         return view('products.index', compact('products', 'search'));
     }

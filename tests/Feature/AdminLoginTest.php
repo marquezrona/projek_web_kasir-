@@ -16,7 +16,7 @@ class AdminLoginTest extends TestCase
     {
         $this->get('/login')
             ->assertOk()
-            ->assertSee('assets/img/jazzel-logo.jpg');
+            ->assertSee('assets/img/jazzel-monogram.png');
 
         $user = User::factory()->create([
             'name' => 'Admin Astrowisata',
@@ -41,7 +41,7 @@ class AdminLoginTest extends TestCase
             ->assertSee('Ya, Keluar')
             ->assertDontSee('Mode Kasir')
             ->assertSee('Pengaturan')
-            ->assertSee('assets/img/jazzel-logo.jpg')
+            ->assertSee('assets/img/jazzel-monogram.png')
             ->assertDontSee('Database Barang');
         $this->get('/admin')
             ->assertOk()
@@ -97,6 +97,30 @@ class AdminLoginTest extends TestCase
             ->assertOk()
             ->assertSee('Beras Premium')
             ->assertDontSee('Sabun Mandi');
+    }
+
+    public function test_admin_product_list_shows_all_products_without_pagination_footer(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+
+        foreach (range(1, 12) as $number) {
+            Product::query()->create([
+                'name' => 'Barang '.$number,
+                'category' => 'Sembako',
+                'price' => 1000,
+                'stock' => 5,
+                'is_active' => true,
+            ]);
+        }
+
+        $this->actingAs($admin)
+            ->get('/products')
+            ->assertOk()
+            ->assertSee('12 barang terdaftar')
+            ->assertSee('Barang 12')
+            ->assertDontSee('Showing 1 to 10 of 12 results')
+            ->assertDontSee('Previous')
+            ->assertDontSee('Next');
     }
 
     public function test_product_delete_button_requires_confirmation_for_the_selected_product(): void
@@ -197,6 +221,20 @@ class AdminLoginTest extends TestCase
             ->get('/kasir')
             ->assertOk()
             ->assertSee('Transaksi Baru')
+            ->assertSee('id="holdButton"', false)
+            ->assertSee('id="holdConfirmationModal"', false)
+            ->assertSee('Tahan Transaksi Ini?')
+            ->assertSee('Ya, Tahan')
+            ->assertSee('id="payConfirmationModal"', false)
+            ->assertSee('Konfirmasi Pembayaran')
+            ->assertSee('Konfirmasi & Bayar')
+            ->assertSee('id="receiptConfirmationModal"', false)
+            ->assertSee('Pembayaran Berhasil')
+            ->assertSee('id="printReceiptButton"', false)
+            ->assertSee('Cetak Struk')
+            ->assertSee('id="holdNotification"', false)
+            ->assertSee('id="heldTransactionsCard"', false)
+            ->assertSee('Transaksi Ditahan')
             ->assertSee('aria-label="Menu kasir"', false)
             ->assertSee('Toko Sembako Jazzel')
             ->assertSee('Konfirmasi Keluar')
@@ -204,8 +242,14 @@ class AdminLoginTest extends TestCase
             ->assertSee('data-method="qris"', false)
             ->assertSee('data-method="transfer"', false)
             ->assertSee('SIMULASI - BUKAN PEMBAYARAN SUNGGUHAN')
+            ->assertDontSee('No. Member / HP')
+            ->assertDontSee('Member VIP')
+            ->assertDontSee('id="customerType"', false)
+            ->assertDontSee('Diskon (%)')
+            ->assertDontSee('Diskon (Rp)')
+            ->assertDontSee('Pajak / PPN')
             ->assertDontSee('data-method="debit"', false)
-            ->assertSee('assets/img/jazzel-logo.jpg')
+            ->assertSee('assets/img/jazzel-monogram.png')
             ->assertSee('Belum ada barang aktif dengan stok tersedia.');
 
         $this->actingAs($cashier)->get('/kasir/produk')
@@ -214,6 +258,46 @@ class AdminLoginTest extends TestCase
             ->assertSee('Belum ada produk aktif.');
         $this->actingAs($cashier)->get('/kasir/laporan')->assertOk()->assertSee('Laporan Kasir');
         $this->actingAs($cashier)->get('/admin')->assertForbidden();
+    }
+
+    public function test_cashier_can_search_active_products_by_name_and_category(): void
+    {
+        $cashier = User::factory()->create(['role' => 'kasir']);
+        Product::query()->create([
+            'name' => 'Beras Jazzel',
+            'category' => 'Sembako',
+            'price' => 18000,
+            'stock' => 12,
+            'is_active' => true,
+        ]);
+        Product::query()->create([
+            'name' => 'Sabun Mandi',
+            'category' => 'Perawatan',
+            'price' => 5000,
+            'stock' => 8,
+            'is_active' => true,
+        ]);
+        Product::query()->create([
+            'name' => 'Beras Nonaktif',
+            'category' => 'Sembako',
+            'price' => 15000,
+            'stock' => 3,
+            'is_active' => false,
+        ]);
+
+        $this->actingAs($cashier)
+            ->get('/kasir/produk?search=Jazzel')
+            ->assertOk()
+            ->assertSee('Beras Jazzel')
+            ->assertDontSee('Sabun Mandi')
+            ->assertDontSee('Beras Nonaktif')
+            ->assertSee('1 hasil pencarian');
+
+        $this->actingAs($cashier)
+            ->get('/kasir/produk?search=Perawatan')
+            ->assertOk()
+            ->assertSee('Sabun Mandi')
+            ->assertDontSee('Beras Jazzel');
     }
 
     public function test_cashier_cannot_manage_products(): void

@@ -21,7 +21,7 @@
 
         .stat-label {
             display: block;
-            color: #34445b;
+            color: #51474a;
             font-size: 12px;
             font-weight: 800;
             letter-spacing: .07em;
@@ -47,8 +47,8 @@
             font-size: 17px;
         }
 
-        .stat-icon.inventory { color: #087f8c; background: #e3f5f5; }
-        .stat-icon.products { color: #356ac3; background: #eaf0ff; }
+        .stat-icon.inventory { color: #8d2a22; background: #f4e6e4; }
+        .stat-icon.products { color: #8d2a22; background: #f4e6e4; }
         .stat-icon.active { color: #21835b; background: #e7f5ec; }
         .stat-icon.low-stock { color: #bd6b12; background: #fff2df; }
 
@@ -65,7 +65,7 @@
         .eyebrow {
             display: block;
             margin-bottom: 3px;
-            color: #5f6d82;
+            color: #766d6f;
             font-size: 11px;
             font-weight: 750;
             letter-spacing: .1em;
@@ -85,26 +85,26 @@
             overflow: visible;
         }
 
-        .chart-gridline { stroke: #e4ebf1; stroke-width: 1; }
-        .chart-area-fill { fill: rgba(7,83,106,.1); }
-        .chart-line { fill: none; stroke: #087f8c; stroke-linecap: round; stroke-linejoin: round; stroke-width: 3; }
-        .chart-point { fill: #fff; stroke: #087f8c; stroke-width: 3; }
+        .chart-gridline { stroke: #e8e0d3; stroke-width: 1; }
+        .chart-area-fill { fill: rgba(185,66,69,.14); }
+        .chart-line { fill: none; stroke: #b94245; stroke-linecap: round; stroke-linejoin: round; stroke-width: 3; }
+        .chart-point { fill: #fff; stroke: #b94245; stroke-width: 3; }
         .chart-labels {
             display: flex;
             justify-content: space-between;
             gap: 4px;
             margin-top: 3px;
-            color: #526176;
+            color: #51474a;
             font-size: 12px;
         }
         .chart-labels span { flex: 1 1 0; text-align: center; }
-        .chart-empty { color: #5f6d82; font-size: 12px; font-style: italic; text-align: center; }
+        .chart-empty { color: #766d6f; font-size: 12px; font-style: italic; text-align: center; }
 
         .payment-empty {
             display: grid;
             min-height: 170px;
             place-items: center;
-            color: #5f6d82;
+            color: #766d6f;
             font-size: 12px;
             font-style: italic;
         }
@@ -115,14 +115,14 @@
             justify-content: space-between;
             gap: 12px;
             padding: 11px 0;
-            border-bottom: 1px solid #edf1f5;
+            border-bottom: 1px solid #eee5e4;
             font-size: 13px;
         }
 
         .stock-row:last-child { border-bottom: 0; }
         .stock-name { font-weight: 650; }
-        .stock-category { display: block; margin-top: 3px; color: #5f6d82; font-size: 12px; }
-        .stock-pill { padding: 4px 8px; border-radius: 99px; color: #3f4e63; background: #eef2f7; font-size: 11px; font-weight: 700; white-space: nowrap; }
+        .stock-category { display: block; margin-top: 3px; color: #766d6f; font-size: 12px; }
+        .stock-pill { padding: 4px 8px; border-radius: 99px; color: #51474a; background: #f2eaea; font-size: 11px; font-weight: 700; white-space: nowrap; }
         .stock-pill.low { color: #b54745; background: #fff0ef; }
 
         @media (max-width: 900px) {

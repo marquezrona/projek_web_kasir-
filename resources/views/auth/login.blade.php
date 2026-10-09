@@ -5,13 +5,14 @@
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
             <meta name="csrf-token" content="{{ csrf_token() }}">
             <title>Login Kasir - {{ $storeSettings->store_name }}</title>
+            <link rel="icon" type="image/png" sizes="256x256" href="{{ asset('assets/img/jazzel-favicon.png?v=2') }}">
             <link rel="stylesheet" href="{{ asset('assets/vendor/bootstrap-icons/bootstrap-icons.css') }}">
             <style>
                 :root {
-                    --ink: #17212b;
-                    --muted: #66727e;
-                    --teal: #07536a;
-                    --teal-dark: #053e51;
+                    --ink: #3a3334;
+                    --muted: #766d6f;
+                    --teal: #b94245;
+                    --teal-dark: #8d2a22;
                     --line: rgba(255, 255, 255, .58);
                 }
 
@@ -41,7 +42,7 @@
                     -webkit-overflow-scrolling: touch;
                     padding: 90px 24px 72px;
                     background-image:
-                        linear-gradient(90deg, rgba(9, 30, 39, .45), rgba(13, 28, 35, .16) 48%, rgba(9, 25, 30, .4)),
+                        linear-gradient(90deg, rgba(67, 28, 29, .5), rgba(72, 43, 44, .18) 48%, rgba(67, 28, 29, .42)),
                         url('https://images.unsplash.com/photo-1604719312566-8912e9227c6a?auto=format&fit=crop&w=2200&q=85');
                     background-size: cover;
                     background-position: center;
@@ -51,30 +52,30 @@
                     content: "";
                     position: absolute;
                     inset: 0;
-                    background: rgba(255, 255, 255, .08);
-                    backdrop-filter: blur(1.5px);
+                    background: rgba(255, 255, 255, .12);
+                    backdrop-filter: blur(3px);
+                    -webkit-backdrop-filter: blur(3px);
                 }
 
                 .brand {
                     position: absolute;
                     z-index: 2;
                     top: 27px;
-                    left: 28px;
+                    left: 50%;
                     display: flex;
                     align-items: center;
+                    justify-content: center;
                     gap: 10px;
                     color: #fff;
                     text-shadow: 0 1px 8px rgba(0, 0, 0, .35);
+                    transform: translateX(-50%);
                 }
 
                 .brand-logo {
-                    width: 58px;
-                    height: 58px;
-                    border: 2px solid rgba(255, 255, 255, .9);
-                    border-radius: 50%;
-                    background: #fff;
-                    object-fit: cover;
-                    box-shadow: 0 1px 8px rgba(0, 0, 0, .25);
+                    width: 125px;
+                    height: auto;
+                    max-height: 92px;
+                    object-fit: contain;
                 }
 
                 .login-card {
@@ -90,16 +91,15 @@
                 }
 
                 .login-heading { text-align: center; margin-bottom: 21px; }
-                .login-heading h1 { margin: 0; font-size: 24px; font-weight: 400; color: #fff; text-shadow: 0 1px 5px rgba(0, 0, 0, .25); }
-                .login-heading p { margin: 3px 0 0; color: #fff; font-size: 18px; text-shadow: 0 1px 5px rgba(0, 0, 0, .22); }
-                .location { margin: 3px 0 0; font-size: 13px; color: #111; }
+                .login-heading h1 { margin: 0; font-size: 27px; font-weight: 500; color: #000; text-shadow: none; }
+                .location { margin: 5px 0 0; font-size: 15px; font-weight: 500; color: #000; }
                 .location i { margin-right: 4px; }
 
                 .status, .errors {
                     padding: 9px 11px;
                     margin-bottom: 13px;
                     border-radius: 7px;
-                    font-size: 12px;
+                    font-size: 13px;
                 }
 
                 .status { color: #075b3d; background: rgba(217, 250, 235, .9); }
@@ -107,12 +107,12 @@
                 .errors p { margin: 0; }
 
                 .field { margin-bottom: 15px; }
-                .field label { display: block; margin-bottom: 6px; font-size: 13px; color: #111; }
+                .field label { display: block; margin-bottom: 6px; font-size: 14px; color: #111; }
                 .input-wrap { position: relative; }
                 .input-wrap > i { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: #75808a; font-size: 16px; }
                 .input-wrap input {
                     width: 100%;
-                    height: 40px;
+                    height: 43px;
                     padding: 0 37px 0 36px;
                     border: 1px solid var(--line);
                     border-radius: 6px;
@@ -120,37 +120,40 @@
                     color: #2b3339;
                     background: rgba(255, 255, 255, .67);
                     font: inherit;
-                    font-size: 13px;
+                    font-size: 14px;
                 }
-                .input-wrap input:focus { border-color: var(--teal); box-shadow: 0 0 0 3px rgba(7, 83, 106, .15); }
+                .input-wrap input:focus { border-color: var(--teal); box-shadow: 0 0 0 3px rgba(185, 66, 69, .22); }
                 .input-wrap input::placeholder { color: #6d7479; }
                 .password-toggle { position: absolute; top: 50%; right: 11px; padding: 0; border: 0; transform: translateY(-50%); color: #68727a; background: transparent; cursor: pointer; }
                 .password-toggle:hover { color: var(--teal); }
 
                 .login-button {
                     width: 100%;
-                    height: 40px;
+                    height: 43px;
                     margin-top: 2px;
                     border: 0;
                     border-radius: 20px;
                     color: #fff;
                     background: var(--teal);
-                    font-size: 13px;
+                    font-size: 14px;
                     font-weight: 700;
                     cursor: pointer;
                     transition: background .2s, transform .2s;
                 }
-                .login-button:hover { background: var(--teal-dark); transform: translateY(-1px); }
+                .login-button:hover { color: #fff; background: var(--teal-dark); transform: translateY(-1px); }
 
-                .login-links { margin-top: 14px; text-align: center; font-size: 12px; line-height: 1.9; }
-                .login-links a { color: #123e4e; text-decoration: none; }
+                .login-links { margin-top: 14px; text-align: center; font-size: 13px; line-height: 1.9; }
+                .login-links a { color: #8d2a22; text-decoration: none; }
                 .login-links a:hover { text-decoration: underline; }
-                .copyright { position: absolute; z-index: 1; bottom: 17px; color: rgba(255, 255, 255, .9); font-size: 10px; text-shadow: 0 1px 4px #333; }
+                .copyright { position: absolute; z-index: 1; bottom: 17px; color: rgba(255, 255, 255, .9); font-size: 11px; text-shadow: 0 1px 4px #333; }
 
                 @media (max-width: 560px) {
                     .login-page { padding: 82px 15px 65px; background-position: 58% center; }
-                    .brand { top: 23px; left: 18px; }
+                    .brand { top: 18px; }
+                    .brand-logo { width: 180px; }
                     .login-card { padding: 23px 19px 20px; }
+                    .login-heading h1 { font-size: 24px; }
+                    .location { font-size: 14px; }
                 }
             </style>
         </head>
@@ -162,8 +165,7 @@
 
                 <section class="login-card" aria-labelledby="login-title">
                     <header class="login-heading">
-                        <h1 id="login-title">LOGIN KASIR SEMBAKO</h1>
-                        <p>{{ $storeSettings->store_name }}</p>
+                        <h1 id="login-title">TOKO JAZZEL</h1>
                         <div class="location"><i class="bi bi-geo-alt-fill" aria-hidden="true"></i>{{ $storeSettings->store_address }}</div>
                     </header>
 

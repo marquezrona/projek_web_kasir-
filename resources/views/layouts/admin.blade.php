@@ -5,19 +5,21 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>@yield('title', 'Admin Kasir') - {{ $storeSettings->store_name }}</title>
+    <link rel="icon" type="image/png" sizes="256x256" href="{{ asset('assets/img/jazzel-favicon.png?v=2') }}">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
     <style>
         :root {
-            --ink: #17243a;
-            --muted: #738198;
-            --line: #e3e9f0;
-            --teal: #07536a;
-            --teal-soft: #dfeff2;
+            --ink: #3a3334;
+            --muted: #766d6f;
+            --line: #e9dada;
+            --teal: #b94245;
+            --teal-deep: #8d2a22;
+            --teal-soft: #f4e6e4;
             --coral: #e96357;
             --coral-strong: #d64c3d;
             --amber: #f7b267;
-            --canvas: #edf5fb;
+            --canvas: #f7f3f3;
             --surface: rgba(255, 255, 255, 0.96);
             --surface-strong: #ffffff;
         }
@@ -28,7 +30,7 @@
             min-height: 100vh;
             margin: 0;
             color: var(--ink);
-            background: linear-gradient(180deg, #edf5fb 0%, #f8fafc 100%);
+            background: linear-gradient(180deg, #f7f3f3 0%, #fbf9f9 100%);
             font-family: "Segoe UI", Tahoma, sans-serif;
         }
 
@@ -38,7 +40,7 @@
             z-index: 1030;
             min-height: 66px;
             background: var(--teal);
-            border-bottom: 1px solid #064456;
+            border-bottom: 1px solid #a93f38;
         }
 
         .admin-navbar .container-fluid {
@@ -47,13 +49,10 @@
 
         .brand-mark {
             display: block;
-            width: 44px;
-            height: 44px;
+            width: 54px;
+            height: 42px;
             margin-right: 8px;
-            border: 2px solid rgba(255,255,255,.85);
-            border-radius: 50%;
-            background: #fff;
-            object-fit: cover;
+            object-fit: contain;
         }
 
         .navbar-brand {
@@ -87,7 +86,7 @@
             min-height: 40px;
             padding: 0 16px;
             border-radius: 9px;
-            color: #526176;
+            color: #51474a;
             font-size: 14px;
             font-weight: 700;
             text-decoration: none;
@@ -97,13 +96,13 @@
 
         .admin-menu .menu-link:hover {
             color: var(--ink);
-            background: #f0f3f8;
+            background: #f2eaea;
             transform: translateY(-1px);
         }
 
         .admin-menu .menu-link.active {
             color: #fff;
-            background: #17243a;
+            background: var(--teal-deep);
             box-shadow: inset 0 -1px 0 rgba(255,255,255,.06);
         }
 
@@ -122,8 +121,8 @@
             height: 30px;
             place-items: center;
             border-radius: 50%;
-            color: var(--teal);
-            background: linear-gradient(135deg, #edf8f9, #dfeef1);
+            color: var(--teal-deep);
+            background: linear-gradient(135deg, #f8efef, #ebd8d8);
             font-weight: 800;
         }
 
@@ -142,8 +141,8 @@
             margin-top: 2px;
             padding: 3px 8px;
             border-radius: 999px;
-            color: #1d3340;
-            background: linear-gradient(135deg, #ffd49a, #f39b73);
+            color: #6a2828;
+            background: linear-gradient(135deg, #f0d8d7, #dda4a0);
             font-size: 8px;
             font-weight: 800;
             letter-spacing: .08em;
@@ -179,12 +178,12 @@
 
         .admin-content p,
         .admin-content .text-muted {
-            color: #5f6d82 !important;
+            color: #766d6f !important;
         }
 
         .admin-content .form-label {
             margin-bottom: 7px;
-            color: #34445b;
+            color: #51474a;
             font-size: 15px;
             font-weight: 650;
         }
@@ -192,7 +191,7 @@
         .admin-content .form-control,
         .admin-content .form-select {
             min-height: 44px;
-            color: #25364c;
+            color: #3a3334;
             font-size: 15px;
         }
 
@@ -222,7 +221,7 @@
             z-index: -1;
             inset: 0;
             background:
-                linear-gradient(180deg, rgba(236, 246, 252, 0.75), rgba(241, 245, 250, 0.83)),
+                linear-gradient(180deg, rgba(248, 241, 241, 0.82), rgba(247, 242, 243, 0.9)),
                 url('https://images.unsplash.com/photo-1604719312566-8912e9227c6a?auto=format&fit=crop&w=2200&q=85') center / cover;
             content: "";
             filter: blur(3px);
@@ -235,8 +234,8 @@
             isolation: isolate;
             overflow: hidden;
             padding: 22px 14px;
-            border-right: 1px solid #064456;
-            background: var(--teal);
+            border-right: 1px solid #6f201b;
+            background: var(--teal-deep);
         }
 
         .workspace-sidebar::before,
@@ -255,7 +254,7 @@
         }
 
         .workspace-sidebar::after {
-            background: linear-gradient(180deg, rgba(7, 83, 106, 0.84), rgba(11, 73, 91, 0.9));
+            background: linear-gradient(180deg, rgba(141, 42, 34, 0.86), rgba(111, 32, 27, 0.92));
         }
 
         .workspace-sidebar-title {
@@ -311,7 +310,7 @@
 
         .page-heading { margin: 0 0 20px; }
         .page-heading h1 { margin: 0; color: var(--ink); font-size: 30px; font-weight: 800; letter-spacing: -.03em; }
-        .page-heading p { margin: 4px 0 0; color: #5f6d82; font-size: 15px; }
+        .page-heading p { margin: 4px 0 0; color: #766d6f; font-size: 15px; }
 
         .admin-card {
             border: 1px solid rgba(20, 40, 60, 0.08);
@@ -322,7 +321,7 @@
 
         .admin-card-header {
             padding: 16px 18px 14px;
-            border-bottom: 1px solid #edf1f5;
+            border-bottom: 1px solid #eee5e4;
         }
 
         .admin-card-header h2, .admin-card-header h3 {
@@ -333,6 +332,30 @@
         }
 
         .admin-card-body { padding: 18px; }
+        .report-stat-card .admin-card-body { padding: 16px; }
+        .report-stat-heading {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 8px;
+            min-height: 38px;
+        }
+        .report-stat-heading > span:first-child { padding-top: 3px; }
+        .report-stat-icon {
+            display: inline-flex;
+            flex: 0 0 38px;
+            align-items: center;
+            justify-content: center;
+            width: 38px;
+            height: 38px;
+            border-radius: 11px;
+            font-size: 18px;
+        }
+        .report-stat-today .report-stat-icon { color: #a83535; background: #fae9e7; }
+        .report-stat-month .report-stat-icon { color: #a85c20; background: #fff0df; }
+        .report-stat-lifetime .report-stat-icon { color: #6f4aa0; background: #f0e9fa; }
+        .report-stat-transactions .report-stat-icon { color: #26756e; background: #e4f3ef; }
+        .report-stat-products .report-stat-icon { color: #426b9b; background: #e8eff9; }
         .admin-card > .table-responsive,
         .admin-card > .products-table-wrap {
             width: calc(100% - 40px);
@@ -342,35 +365,41 @@
         .admin-card .table {
             --bs-table-bg: transparent;
             margin-bottom: 0;
-            border: 1px solid #d4dfe7;
+            border: 0;
             border-collapse: collapse;
             font-size: 14px;
         }
         .admin-card .table > :not(caption) > * > * {
             padding: 12px;
-            border: 1px solid #d4dfe7;
-            color: #29394f;
+            border: 0;
+            border-bottom: 1px solid #eee5e4;
+            color: #3a3334;
             vertical-align: middle;
         }
         .admin-card .table thead th {
             padding-top: 13px;
             padding-bottom: 13px;
-            color: #34445b;
-            background: linear-gradient(180deg, #edf5f8, #e3eef3);
+            color: #51474a;
+            background: linear-gradient(180deg, #f2e8e7, #e9dada);
+            border-bottom: 1px solid #e5d8d7;
             font-size: 12px;
             font-weight: 750;
             letter-spacing: .06em;
             text-transform: uppercase;
             white-space: nowrap;
         }
-        .admin-card .table tbody tr:hover > * { background: #f5f9fb; }
+        .admin-card .table tbody tr:last-child > * { border-bottom: 0; }
+        .admin-card .table tbody tr:hover > * { background: #faf6f5; }
         .btn-primary {
             --bs-btn-bg: var(--teal);
             --bs-btn-border-color: var(--teal);
-            --bs-btn-hover-bg: #064456;
-            --bs-btn-hover-border-color: #064456;
-            --bs-btn-active-bg: #043b4b;
-            --bs-btn-active-border-color: #043b4b;
+            --bs-btn-color: #fff;
+            --bs-btn-hover-color: #fff;
+            --bs-btn-hover-bg: #8d2a22;
+            --bs-btn-hover-border-color: #8d2a22;
+            --bs-btn-active-color: #fff;
+            --bs-btn-active-bg: #8d2a22;
+            --bs-btn-active-border-color: #8d2a22;
         }
         .btn-outline-primary,
         .btn-outline-secondary {
@@ -378,12 +407,12 @@
             --bs-btn-bg: var(--teal);
             --bs-btn-border-color: var(--teal);
             --bs-btn-hover-color: #fff;
-            --bs-btn-hover-bg: #064456;
-            --bs-btn-hover-border-color: #064456;
+            --bs-btn-hover-bg: #8d2a22;
+            --bs-btn-hover-border-color: #8d2a22;
             --bs-btn-active-color: #fff;
-            --bs-btn-active-bg: #064456;
-            --bs-btn-active-border-color: #064456;
-            --bs-btn-focus-shadow-rgb: 7, 83, 106;
+            --bs-btn-active-bg: #8d2a22;
+            --bs-btn-active-border-color: #8d2a22;
+            --bs-btn-focus-shadow-rgb: 185, 66, 69;
         }
 
         @media (max-width: 767px) {
@@ -422,7 +451,7 @@
             .workspace-sidebar {
                 padding: 9px 12px;
                 border-right: 0;
-                border-bottom: 1px solid #064456;
+                border-bottom: 1px solid #6f201b;
             }
             .workspace-sidebar-title { display: none; }
             .workspace-sidebar .admin-menu {
