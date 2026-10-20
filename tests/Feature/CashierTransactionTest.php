@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Contracts\ReceiptPrinter;
+use App\Models\Customer;
 use App\Models\Product;
 use App\Models\Sale;
 use App\Models\StoreSetting;
@@ -109,7 +110,7 @@ class CashierTransactionTest extends TestCase
         $this->assertDatabaseHas('products', ['id' => $product->id, 'stock' => 1]);
     }
 
-    public function test_checkout_only_accepts_cash_qris_or_bank_transfer(): void
+    public function test_checkout_only_accepts_supported_payment_methods(): void
     {
         $cashier = User::factory()->create(['role' => 'kasir']);
         $product = Product::query()->create([
@@ -143,6 +144,174 @@ class CashierTransactionTest extends TestCase
         ])->assertCreated();
 
         $this->assertDatabaseHas('sales', ['payment_method' => 'transfer']);
+    }
+
+    public function test_cashier_can_register_an_nfc_customer_and_top_up_their_card(): void
+    {
+        $cashier = User::factory()->create(['role' => 'kasir']);
+
+        $this->actingAs($cashier)->get(route('cashier.pelanggan'))
+            ->assertOk()
+            ->assertSee('Daftarkan Member dan Kartu')
+            ->assertSee('Isi Saldo Kartu');
+
+        $this->actingAs($cashier)->post(route('cashier.pelanggan.store'), [
+            'name' => 'Pelanggan Demo',
+            'phone' => '08123456789',
+            'card_uid' => 'demo-kartu-001',
+        ])->assertRedirect(route('cashier.pelanggan'))
+            ->assertSessionHas('status');
+
+        $customer = Customer::query()->where('name', 'Pelanggan Demo')->firstOrFail();
+        $card = $customer->nfcCard()->firstOrFail();
+        $this->assertSame('DEMO-KARTU-001', $card->uid);
+        $this->assertSame('0.00', $card->balance);
+        $this->actingAs($cashier)->get(route('cashier.pelanggan'))
+            ->assertOk()
+            ->assertSee('Pelanggan Demo')
+            ->assertSee('DEMO-KARTU-001');
+
+        $this->actingAs($cashier)->post(route('cashier.pelanggan.top-up', $customer), [
+            'amount' => 50000,
+            'payment_method' => 'qris',
+        ])->assertRedirect(route('cashier.pelanggan'))
+            ->assertSessionHas('status');
+
+        $this->assertDatabaseHas('nfc_card_transactions', [
+            'nfc_card_id' => $card->id,
+            'cashier_id' => $cashier->id,
+            'type' => 'top_up',
+            'amount' => 50000,
+            'payment_method' => 'qris',
+        ]);
+        $this->actingAs($cashier)->postJson(route('cashier.nfc.balance'), [
+            'card_uid' => 'demo-kartu-001',
+        ])->assertOk()
+            ->assertJsonPath('registered', true)
+            ->assertJsonPath('balance', '50000.00');
+    }
+
+    public function test_nfc_checkout_debits_card_balance_and_records_the_purchase(): void
+    {
+        $cashier = User::factory()->create(['role' => 'kasir']);
+        $product = Product::query()->create([
+            'name' => 'Susu',
+            'price' => 12000,
+            'stock' => 4,
+            'is_active' => true,
+        ]);
+        $customer = Customer::query()->create(['name' => 'Member NFC', 'phone' => '08123456789']);
+        $card = $customer->nfcCard()->create([
+            'uid' => 'CARD-001',
+            'balance' => 50000,
+        ]);
+
+        $this->actingAs($cashier)->postJson(route('cashier.checkout'), [
+            'items' => [['product_id' => $product->id, 'quantity' => 2]],
+            'discount_percent' => 0,
+            'discount_amount' => 0,
+            'tax' => 0,
+            'other_fee' => 0,
+            'paid' => 24000,
+            'payment_method' => 'nfc',
+            'card_uid' => 'card-001',
+        ])->assertCreated()
+            ->assertJsonPath('total', '24000.00')
+            ->assertJsonPath('change', '0.00')
+            ->assertJsonPath('card_balance', '26000.00');
+
+        $sale = Sale::query()->firstOrFail();
+        $this->assertSame('nfc', $sale->payment_method);
+        $this->assertSame($customer->id, $sale->customer_id);
+        $this->assertSame('Member', $sale->customer_type);
+        $this->assertDatabaseHas('sales', [
+            'id' => $sale->id,
+            'customer_contact' => '08123456789',
+        ]);
+        $this->actingAs($cashier)->get(route('cashier.riwayat'))
+            ->assertOk()
+            ->assertSee('Member NFC')
+            ->assertSee('Member NFC', false);
+        $this->assertDatabaseHas('nfc_cards', ['id' => $card->id, 'balance' => 26000]);
+        $this->assertDatabaseHas('nfc_card_transactions', [
+            'nfc_card_id' => $card->id,
+            'sale_id' => $sale->id,
+            'type' => 'purchase',
+            'amount' => 24000,
+            'payment_method' => 'nfc',
+        ]);
+        $this->assertDatabaseHas('products', ['id' => $product->id, 'stock' => 2]);
+    }
+
+    public function test_non_nfc_payment_methods_record_the_sale_as_general_customer(): void
+    {
+        $cashier = User::factory()->create(['role' => 'kasir']);
+        $product = Product::query()->create([
+            'name' => 'Roti',
+            'price' => 8000,
+            'stock' => 3,
+            'is_active' => true,
+        ]);
+        $member = Customer::query()->create(['name' => 'Member Tunai', 'phone' => '0811222333']);
+        $member->nfcCard()->create(['uid' => 'MEMBER-CASH-01', 'balance' => 12000]);
+
+        $this->actingAs($cashier)->postJson(route('cashier.checkout'), [
+            'items' => [['product_id' => $product->id, 'quantity' => 1]],
+            'discount_percent' => 0,
+            'discount_amount' => 0,
+            'tax' => 0,
+            'other_fee' => 0,
+            'paid' => 10000,
+            'payment_method' => 'tunai',
+            'customer_id' => $member->id,
+        ])->assertCreated()
+            ->assertJsonPath('total', '8000.00')
+            ->assertJsonPath('change', '2000.00');
+
+        $sale = Sale::query()->firstOrFail();
+        $this->assertNull($sale->customer_id);
+        $this->assertSame('Umum', $sale->customer_type);
+        $this->assertNull($sale->customer_contact);
+        $this->assertDatabaseHas('nfc_cards', [
+            'customer_id' => $member->id,
+            'balance' => 12000,
+        ]);
+    }
+
+    public function test_nfc_checkout_rejects_an_unregistered_or_insufficient_balance_card(): void
+    {
+        $cashier = User::factory()->create(['role' => 'kasir']);
+        $product = Product::query()->create([
+            'name' => 'Kopi',
+            'price' => 10000,
+            'stock' => 3,
+            'is_active' => true,
+        ]);
+        $customer = Customer::query()->create(['name' => 'Pelanggan Saldo Rendah']);
+        $customer->nfcCard()->create(['uid' => 'CARD-LOW', 'balance' => 5000]);
+        $payload = [
+            'items' => [['product_id' => $product->id, 'quantity' => 1]],
+            'discount_percent' => 0,
+            'discount_amount' => 0,
+            'tax' => 0,
+            'other_fee' => 0,
+            'paid' => 10000,
+            'payment_method' => 'nfc',
+        ];
+
+        $this->actingAs($cashier)->postJson(route('cashier.checkout'), [
+            ...$payload,
+            'card_uid' => 'UNREGISTERED',
+        ])->assertUnprocessable()->assertJsonValidationErrors('card_uid');
+
+        $this->actingAs($cashier)->postJson(route('cashier.checkout'), [
+            ...$payload,
+            'card_uid' => 'CARD-LOW',
+        ])->assertUnprocessable()->assertJsonValidationErrors('card_uid');
+
+        $this->assertDatabaseCount('sales', 0);
+        $this->assertDatabaseHas('nfc_cards', ['uid' => 'CARD-LOW', 'balance' => 5000]);
+        $this->assertDatabaseHas('products', ['id' => $product->id, 'stock' => 3]);
     }
 
     public function test_cashier_history_only_shows_the_signed_in_cashiers_transactions(): void

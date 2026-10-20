@@ -11,6 +11,7 @@ class Sale extends Model
     protected $fillable = [
         'invoice',
         'cashier_id',
+        'customer_id',
         'cashier_name',
         'customer_type',
         'customer_contact',
@@ -42,6 +43,11 @@ class Sale extends Model
     public function cashier(): BelongsTo
     {
         return $this->belongsTo(User::class, 'cashier_id');
+    }
+
+    public function customer(): BelongsTo
+    {
+        return $this->belongsTo(Customer::class);
     }
 
     public function items(): HasMany

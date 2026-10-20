@@ -3,6 +3,9 @@
 namespace App\Http\Controllers\Cashier;
 
 use App\Http\Controllers\Controller;
+use App\Models\Customer;
+use App\Models\NfcCard;
+use App\Models\NfcCardTransaction;
 use App\Models\Product;
 use App\Models\Sale;
 use Illuminate\Http\JsonResponse;
@@ -14,6 +17,24 @@ use Illuminate\Validation\ValidationException;
 
 class SaleController extends Controller
 {
+    public function nfcBalance(Request $request): JsonResponse
+    {
+        $this->normalizeCardUid($request);
+        $data = $request->validate([
+            'card_uid' => ['required', 'string', 'max:100', 'regex:/^[A-Z0-9:_-]+$/'],
+        ]);
+
+        $card = NfcCard::query()->where('uid', $data['card_uid'])->first();
+
+        return response()->json([
+            'card_uid' => $data['card_uid'],
+            'registered' => $card?->customer !== null,
+            'balance' => $card?->balance ?? '0.00',
+            'member_name' => $card?->customer?->name,
+            'member_id' => $card?->customer_id,
+        ]);
+    }
+
     public function index(Request $request)
     {
         $validated = $request->validate([
@@ -24,7 +45,7 @@ class SaleController extends Controller
         $period = $validated['period'] ?? 'all';
 
         $sales = Sale::query()
-            ->with('items')
+            ->with(['items', 'customer'])
             ->where('cashier_id', $request->user()->id)
             ->when($period !== 'all', function ($query) use ($period) {
                 $now = now();
@@ -63,6 +84,7 @@ class SaleController extends Controller
 
     public function store(Request $request): JsonResponse
     {
+        $this->normalizeCardUid($request);
         $data = $request->validate([
             'items' => ['required', 'array', 'min:1'],
             'items.*.product_id' => ['required', 'integer', 'distinct', 'exists:products,id'],
@@ -72,7 +94,8 @@ class SaleController extends Controller
             'tax' => ['required', 'numeric', 'min:0'],
             'other_fee' => ['required', 'numeric', 'min:0'],
             'paid' => ['required', 'numeric', 'min:0'],
-            'payment_method' => ['required', 'in:tunai,qris,transfer'],
+            'payment_method' => ['required', 'in:tunai,qris,transfer,nfc'],
+            'card_uid' => ['required_if:payment_method,nfc', 'nullable', 'string', 'max:100', 'regex:/^[A-Z0-9:_-]+$/'],
         ]);
 
         $sale = DB::transaction(function () use ($data, $request): Sale {
@@ -127,9 +150,42 @@ class SaleController extends Controller
             $tax = (float) $data['tax'];
             $otherFee = (float) $data['other_fee'];
             $total = round($subtotal - $discountAmount + $tax + $otherFee, 2);
+            $nfcCard = null;
+            $member = null;
             $paid = (float) $data['paid'];
 
-            if ($paid < $total) {
+            if ($data['payment_method'] === 'nfc') {
+                $nfcCard = NfcCard::query()
+                    ->where('uid', $data['card_uid'])
+                    ->lockForUpdate()
+                    ->first();
+
+                if (! $nfcCard) {
+                    throw ValidationException::withMessages([
+                        'card_uid' => 'Kartu NFC belum terdaftar. Isi saldo kartu terlebih dahulu.',
+                    ]);
+                }
+
+                if (! $nfcCard->customer_id) {
+                    throw ValidationException::withMessages([
+                        'card_uid' => 'Kartu NFC belum terhubung ke pelanggan. Daftarkan pelanggan melalui menu Pelanggan NFC.',
+                    ]);
+                }
+
+                $cardMember = Customer::query()->findOrFail($nfcCard->customer_id);
+
+                $member = $cardMember;
+
+                if ((float) $nfcCard->balance < $total) {
+                    throw ValidationException::withMessages([
+                        'card_uid' => 'Saldo kartu NFC tidak mencukupi.',
+                    ]);
+                }
+
+                $paid = $total;
+            }
+
+            if ($data['payment_method'] !== 'nfc' && $paid < $total) {
                 throw ValidationException::withMessages([
                     'paid' => 'Uang pembayaran masih kurang dari total transaksi.',
                 ]);
@@ -138,9 +194,10 @@ class SaleController extends Controller
             $sale = Sale::query()->create([
                 'invoice' => 'INV-'.now()->format('Ymd').'-'.Str::upper(Str::random(8)),
                 'cashier_id' => $request->user()->id,
+                'customer_id' => $member?->id,
                 'cashier_name' => $request->user()->name,
-                'customer_type' => 'Umum',
-                'customer_contact' => null,
+                'customer_type' => $member ? 'Member' : 'Umum',
+                'customer_contact' => $member?->phone,
                 'subtotal' => $subtotal,
                 'discount_percent' => $discountPercent,
                 'discount_amount' => $discountAmount,
@@ -166,16 +223,41 @@ class SaleController extends Controller
                 $product->decrement('stock', $lineItem['quantity']);
             }
 
+            if ($nfcCard) {
+                $nfcCard->decrement('balance', $total);
+                NfcCardTransaction::query()->create([
+                    'nfc_card_id' => $nfcCard->id,
+                    'cashier_id' => $request->user()->id,
+                    'sale_id' => $sale->id,
+                    'type' => 'purchase',
+                    'amount' => $total,
+                    'payment_method' => 'nfc',
+                ]);
+            }
+
             return $sale;
         });
 
-return response()->json([
-    'message' => 'Transaksi berhasil disimpan.',
-    'sale_id' => $sale->id,
-    'invoice' => $sale->invoice,
-    'total' => $sale->total,
-    'change' => $sale->change,
-    'history_url' => route('cashier.riwayat'),
-], 201); 
+        $cardBalance = $data['payment_method'] === 'nfc'
+            ? NfcCard::query()->where('uid', $data['card_uid'])->value('balance')
+            : null;
+
+        return response()->json([
+            'message' => 'Transaksi berhasil disimpan.',
+            'sale_id' => $sale->id,
+            'invoice' => $sale->invoice,
+            'total' => $sale->total,
+            'change' => $sale->change,
+            'card_balance' => $cardBalance,
+            'history_url' => route('cashier.riwayat'),
+        ], 201);
+    }
+
+    private function normalizeCardUid(Request $request): void
+    {
+        $uid = (string) $request->input('card_uid', '');
+        $uid = strtoupper((string) preg_replace('/\s+/', '', trim($uid)));
+
+        $request->merge(['card_uid' => $uid]);
     }
 }

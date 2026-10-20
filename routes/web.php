@@ -1,25 +1,31 @@
 <?php
 
-use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\Admin\CashierController;
+use App\Http\Controllers\Admin\MemberController;
 use App\Http\Controllers\Admin\StoreSettingController;
+use App\Http\Controllers\Cashier\NfcCustomerController;
 use App\Http\Controllers\Cashier\SaleController;
-use App\Http\Controllers\StrukController;
-use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\ProductController;
+use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\StrukController;
+use App\Models\Customer;
 use App\Models\Product;
 use App\Models\Sale;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Route;
 use Illuminate\Validation\ValidationException;
 
 Route::get('/', function () {
     return redirect()->route('login');
 });
 
-
 Route::middleware(['auth', 'verified', 'role:kasir'])->group(function () {
+    Route::get('/kasir/pelanggan', [NfcCustomerController::class, 'index'])->name('cashier.pelanggan');
+    Route::post('/kasir/pelanggan', [NfcCustomerController::class, 'store'])->name('cashier.pelanggan.store');
+    Route::post('/kasir/pelanggan/{customer}/top-up', [NfcCustomerController::class, 'topUp'])->name('cashier.pelanggan.top-up');
+    Route::post('/kasir/kartu/saldo', [SaleController::class, 'nfcBalance'])->name('cashier.nfc.balance');
     Route::post('/kasir/transaksi', [SaleController::class, 'store'])->name('cashier.checkout');
     Route::post('/kasir/riwayat/{sale}/struk', [StrukController::class, 'printReceipt'])->name('cashier.receipt.print');
     Route::get('/kasir/riwayat', [SaleController::class, 'index'])->name('cashier.riwayat');
@@ -27,12 +33,14 @@ Route::middleware(['auth', 'verified', 'role:kasir'])->group(function () {
     Route::get('/kasir', function () {
         return view('cashier.index', [
             'products' => Product::query()->where('is_active', true)->where('stock', '>', 0)->orderBy('name')->get(),
+            'members' => Customer::query()->with('nfcCard')->orderBy('name')->get(),
         ]);
     })->name('cashier.index');
 
     Route::get('/kasir/transaksi', function () {
         return view('cashier.index', [
             'products' => Product::query()->where('is_active', true)->where('stock', '>', 0)->orderBy('name')->get(),
+            'members' => Customer::query()->with('nfcCard')->orderBy('name')->get(),
         ]);
     })->name('cashier.transaksi');
 
@@ -145,7 +153,7 @@ Route::middleware(['auth', 'verified', 'role:kasir'])->group(function () {
             'periodSales' => $periodSales,
             'transactionCount' => $transactionCount,
             'productsCount' => Product::query()->where('is_active', true)->count(),
-            'transactions' => $filteredSales->latest()->paginate(25)->withQueryString(),
+            'transactions' => (clone $filteredSales)->with('customer')->latest()->paginate(25)->withQueryString(),
             'period' => $period,
             'selectedDate' => $selectedDate,
             'selectedMonth' => $selectedMonth,
@@ -163,17 +171,18 @@ Route::get('/dashboard', function () {
     $products = Product::latest()->get();
 
     return view('dashboard', [
-        'products'         => $products,
-        'totalProducts'    => $products->count(),
-        'activeProducts'   => $products->where('is_active', true)->count(),
+        'products' => $products,
+        'totalProducts' => $products->count(),
+        'activeProducts' => $products->where('is_active', true)->count(),
         'lowStockProducts' => $products->where('stock', '<=', 5)->count(),
-        'inventoryValue'   => $products->sum(fn (Product $product) => $product->price * $product->stock),
+        'inventoryValue' => $products->sum(fn (Product $product) => $product->price * $product->stock),
     ]);
 })->middleware(['auth', 'verified'])->name('dashboard');
 
 Route::middleware(['auth', 'verified', 'admin'])->group(function () {
     Route::resource('products', ProductController::class);
 
+    Route::get('/admin/member', [MemberController::class, 'index'])->name('admin.members');
     Route::get('/admin/pengaturan', [StoreSettingController::class, 'edit'])->name('admin.pengaturan');
     Route::put('/admin/pengaturan/toko', [StoreSettingController::class, 'updateStore'])->name('admin.pengaturan.toko');
     Route::put('/admin/pengaturan/akun', [StoreSettingController::class, 'updateAccount'])->name('admin.pengaturan.akun');
@@ -300,7 +309,7 @@ Route::middleware(['auth', 'verified', 'admin'])->group(function () {
             'periodSales' => $periodSales,
             'transactionCount' => $transactionCount,
             'productsCount' => Product::query()->where('is_active', true)->count(),
-            'transactions' => $filteredSales->latest()->paginate(25)->withQueryString(),
+            'transactions' => (clone $filteredSales)->with('customer')->latest()->paginate(25)->withQueryString(),
             'period' => $period,
             'selectedDate' => $selectedDate,
             'selectedMonth' => $selectedMonth,
@@ -320,7 +329,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
-    
+
     // TAMBAHKAN ROUTE BARU DALAM GRUP DI SINI
 });
 

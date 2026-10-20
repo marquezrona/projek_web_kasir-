@@ -166,7 +166,12 @@
                             <tr>
                                 <td class="fw-semibold">{{ $transaction->invoice }}</td>
                                 <td>{{ $transaction->created_at->format('d/m/Y H:i') }}</td>
-                                <td>{{ $transaction->customer_type }}</td>
+                                <td>
+                                    {{ $transaction->customer?->name ?? $transaction->customer_type }}
+                                    @if ($transaction->customer)
+                                        <div class="small text-success">Member NFC</div>
+                                    @endif
+                                </td>
                                 <td>{{ strtoupper($transaction->payment_method) }}</td>
                                 <td class="text-end fw-semibold">Rp {{ number_format((float) $transaction->total, 0, ',', '.') }}</td>
                             </tr>

@@ -537,10 +537,12 @@
                     <a class="menu-link {{ request()->routeIs('admin.dashboard') ? 'active' : '' }}" href="{{ route('admin.dashboard') }}"><i class="bi bi-grid"></i>Dashboard</a>
                     <a class="menu-link {{ request()->routeIs('products.*') ? 'active' : '' }}" href="{{ route('products.index') }}"><i class="bi bi-box-seam"></i>Kelola Barang</a>
                     <a class="menu-link {{ request()->routeIs('admin.kasir') ? 'active' : '' }}" href="{{ route('admin.kasir') }}"><i class="bi bi-people"></i>Kelola Kasir</a>
+                    <a class="menu-link {{ request()->routeIs('admin.members') ? 'active' : '' }}" href="{{ route('admin.members') }}"><i class="bi bi-person-vcard"></i>Member NFC</a>
                     <a class="menu-link {{ request()->routeIs('admin.laporan') ? 'active' : '' }}" href="{{ route('admin.laporan') }}"><i class="bi bi-bar-chart"></i>Laporan</a>
                     <a class="menu-link {{ request()->routeIs('admin.pengaturan*') ? 'active' : '' }}" href="{{ route('admin.pengaturan') }}"><i class="bi bi-gear"></i>Pengaturan</a>
                 @else
                     <a class="menu-link {{ request()->routeIs('cashier.index', 'cashier.transaksi') ? 'active' : '' }}" href="{{ route('cashier.index') }}"><i class="bi bi-cart3"></i>Transaksi Baru</a>
+                    <a class="menu-link {{ request()->routeIs('cashier.pelanggan*') ? 'active' : '' }}" href="{{ route('cashier.pelanggan') }}"><i class="bi bi-person-vcard"></i>Member NFC</a>
                     <a class="menu-link {{ request()->routeIs('cashier.produk') ? 'active' : '' }}" href="{{ route('cashier.produk') }}"><i class="bi bi-box-seam"></i>Daftar Produk</a>
                     <a class="menu-link {{ request()->routeIs('cashier.riwayat') ? 'active' : '' }}" href="{{ route('cashier.riwayat') }}"><i class="bi bi-receipt"></i>Riwayat Transaksi</a>
                     <a class="menu-link {{ request()->routeIs('cashier.laporan') ? 'active' : '' }}" href="{{ route('cashier.laporan') }}"><i class="bi bi-bar-chart"></i>Laporan</a>

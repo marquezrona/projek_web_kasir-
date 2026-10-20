@@ -78,7 +78,10 @@
                                     <div class="small text-muted">{{ $sale->created_at->format('d/m/Y H:i') }}</div>
                                 </td>
                                 <td>
-                                    {{ $sale->customer_type }}
+                                    {{ $sale->customer?->name ?? $sale->customer_type }}
+                                    @if($sale->customer)
+                                        <div class="small text-success">Member NFC</div>
+                                    @endif
                                     @if($sale->customer_contact)
                                         <div class="small text-muted">{{ $sale->customer_contact }}</div>
                                     @endif

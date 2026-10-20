@@ -17,14 +17,16 @@ Sistem Kasir Toko Jazzel membantu admin dan kasir menjalankan kegiatan toko mela
 - **Dashboard admin** — ringkasan persediaan, barang aktif, stok rendah, dan grafik penjualan.
 - **Kelola barang** — tambah, lihat, ubah, hapus, cari barang, dan atur status aktif.
 - **Manajemen kasir** — admin dapat membuat akun kasir.
-- **Transaksi kasir** — pencarian barang, pengelolaan keranjang, pembayaran tunai, QRIS simulasi, dan transfer.
+- **Transaksi kasir** — pencarian barang, pengelolaan keranjang, pembayaran tunai, QRIS simulasi, transfer, dan kartu NFC.
+- **Member NFC** — daftarkan pelanggan sebagai member dengan kartu NFC, isi saldo melalui metode pembayaran demo, dan gunakan kartu untuk berbelanja sesuai saldo.
+- **Informasi member admin** — admin dapat melihat daftar member, UID kartu, saldo terkini, dan aktivitas kartu terakhir.
 - **Transaksi tertahan** — simpan transaksi sementara di browser dan lanjutkan pembayarannya nanti.
 - **Riwayat transaksi** — pencarian dan filter riwayat transaksi.
 - **Laporan penjualan** — ringkasan dan filter laporan berdasarkan hari, minggu, dan bulan.
 - **Pengaturan toko** — ubah identitas toko dan logo.
 - **Cetak struk** — mendukung printer thermal ESC/POS pada Windows.
 
-> Pembayaran QRIS di aplikasi ini merupakan **simulasi**, bukan pemrosesan pembayaran sungguhan. Transaksi tertahan disimpan di browser yang digunakan dan tidak otomatis tersedia di perangkat lain.
+> Pembayaran QRIS, transfer, dan isi saldo pada fitur NFC merupakan **simulasi**, bukan pemrosesan pembayaran sungguhan. Daftarkan pelanggan sebagai member dan berikan UID kartu melalui menu **Member NFC**, lalu gunakan formulir isi saldo pada halaman tersebut. Member dapat memilih NFC atau metode lain; pilih nama member pada transaksi agar penjualan non-NFC tetap tercatat ke member yang benar. Reader NFC USB seperti pada contoh dapat digunakan jika beroperasi sebagai keyboard dan kolom UID sedang aktif; UID juga dapat dimasukkan manual. Transaksi tertahan disimpan di browser yang digunakan dan tidak otomatis tersedia di perangkat lain.
 
 ## Teknologi
 

@@ -90,9 +90,16 @@
         .payment-label { margin-bottom: 6px; color: #536176; font-size: 10px; font-weight: 750; }
         .payment-input { width: 100%; height: 40px; padding: 0 10px; border: 1px solid #dda4a0; border-radius: 7px; outline: none; color: #3a3334; background: #fff; text-align: right; font-size: 18px; font-weight: 700; }
         .payment-input:focus { border-color: #b94245; box-shadow: 0 0 0 3px rgba(185,66,69,.18); }
-        .payment-method { display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px; }
+        .payment-method { display: grid; grid-template-columns: repeat(2, 1fr); gap: 5px; }
         .payment-method button { min-height: 29px; border: 1px solid #e5d8d7; border-radius: 5px; color: #51474a; background: #fff; cursor: pointer; font-size: 10px; }
         .payment-method button.active { border-color: #b94245; color: #fff; background: #b94245; }
+        .member-select { margin-top: 10px; }
+        .nfc-payment-fields { margin-top: 10px; padding: 10px; border: 1px solid #d8e7ee; border-radius: 7px; background: #f5fafc; }
+        .nfc-payment-fields[hidden] { display: none; }
+        .nfc-payment-fields .form-control { height: 38px; }
+        .nfc-card-status { display: block; min-height: 18px; margin-top: 6px; color: #536176; font-size: 11px; }
+        .nfc-payment-actions { display: flex; gap: 6px; margin-top: 7px; }
+        .nfc-payment-actions .btn { min-height: 32px; padding: 0 9px; font-size: 11px; }
         .qris-simulation-mark {
             display: grid;
             width: 126px;
@@ -260,11 +267,29 @@
                         </div>
 
                         <div class="payment-box">
+                            <label class="payment-label" id="memberCustomerLabel" for="memberCustomer">Pelanggan</label>
+                            <select class="form-select member-select" id="memberCustomer" disabled>
+                                <option value="">Pelanggan umum</option>
+                                @foreach ($members as $member)
+                                    @if ($member->nfcCard)
+                                        <option value="{{ $member->id }}">{{ $member->name }} — {{ $member->nfcCard->uid }}</option>
+                                    @endif
+                                @endforeach
+                            </select>
                             <div class="payment-label" id="paymentLabel">Uang Dibayar</div>
                             <input class="payment-input" id="payment" type="number" min="0" placeholder="0">
                             <div class="payment-label" style="margin-top:13px">Metode Pembayaran</div>
                             <div class="payment-method">
-                                <button type="button" class="active" data-method="tunai">Tunai</button><button type="button" data-method="qris">QRIS</button><button type="button" data-method="transfer">Transfer</button>
+                                <button type="button" class="active" data-method="tunai">Tunai</button><button type="button" data-method="qris">QRIS</button><button type="button" data-method="transfer">Transfer</button><button type="button" data-method="nfc">Tap NFC</button>
+                            </div>
+                            <div class="nfc-payment-fields" id="nfcPaymentFields" hidden>
+                                <label class="payment-label" for="nfcCardUid">UID kartu (reader USB atau input simulasi)</label>
+                                <input class="form-control" id="nfcCardUid" type="text" maxlength="100" autocomplete="off" placeholder="Tempel kartu atau masukkan UID">
+                                <span class="nfc-card-status" id="nfcCardStatus" role="status" aria-live="polite">Kartu demo: DEMO-KARTU-001</span>
+                                <div class="nfc-payment-actions">
+                                    <button class="btn btn-outline-primary" type="button" id="checkNfcBalanceButton">Cek saldo</button>
+                                    <button class="btn btn-outline-secondary" type="button" id="useDemoCardButton">Isi UID demo</button>
+                                </div>
                             </div>
                             <div class="change-box" id="changeBox">
                                 <div class="change-label" id="changeLabel">KEMBALIAN</div>
@@ -408,11 +433,17 @@
         const products = JSON.parse(document.querySelector('#product-data').textContent);
         let cart = [];
         let checkoutInProgress = false;
+        let nfcCardBalance = null;
+        let nfcLookupTimeout;
         let activeHeldTransactionId = null;
         const searchInput = document.querySelector('#searchProduct');
         const resultsBox = document.querySelector('#productResults');
         const paymentInput = document.querySelector('#payment');
+        const memberSelect = document.querySelector('#memberCustomer');
         const paymentButtons = [...document.querySelectorAll('.payment-method button')];
+        const nfcPaymentFields = document.querySelector('#nfcPaymentFields');
+        const nfcCardUidInput = document.querySelector('#nfcCardUid');
+        const nfcCardStatus = document.querySelector('#nfcCardStatus');
         const heldTransactionsCard = document.querySelector('#heldTransactionsCard');
         const heldTransactionsList = document.querySelector('#heldTransactionsList');
         const holdConfirmationElement = document.querySelector('#holdConfirmationModal');
@@ -460,6 +491,14 @@
             activeHeldTransactionId = null;
             document.querySelector('#otherFee').value = 0;
             paymentInput.value = '';
+            memberSelect.value = '';
+            nfcCardUidInput.value = '';
+            nfcCardBalance = null;
+            nfcPaymentFields.hidden = true;
+            nfcCardStatus.textContent = 'Kartu demo: DEMO-KARTU-001';
+            document.querySelector('#memberCustomerLabel').textContent = 'Pelanggan';
+            memberSelect.value = '';
+            memberSelect.options[0].textContent = 'Pelanggan umum';
             paymentButtons.forEach(button => button.classList.toggle('active', button.dataset.method === 'tunai'));
             paymentInput.readOnly = false;
             document.querySelector('#paymentLabel').textContent = 'Uang Dibayar';
@@ -546,8 +585,7 @@
             document.querySelector('#otherFee').value = transaction.otherFee;
             paymentInput.value = transaction.payment;
             paymentButtons.forEach(button => button.classList.toggle('active', button.dataset.method === transaction.paymentMethod));
-            paymentInput.readOnly = transaction.paymentMethod === 'qris';
-            document.querySelector('#paymentLabel').textContent = transaction.paymentMethod === 'qris' ? 'Nominal QRIS' : 'Uang Dibayar';
+            setPaymentMethod(transaction.paymentMethod);
             renderCart();
             paymentInput.value = transaction.payment;
             calculateChange();
@@ -555,21 +593,122 @@
         function searchProduct() { const keyword = searchInput.value.toLowerCase().trim(); if (!keyword) { resultsBox.style.display = 'none'; return; } const matches = products.filter(product => `${product.name} ${product.category || 'Umum'} ${product.id}`.toLowerCase().includes(keyword)); resultsBox.innerHTML = matches.length ? matches.map(product => `<div class="product-item" data-product-id="${product.id}"><div><div class="product-name">${product.name}</div><div class="product-meta">${product.category || 'Umum'} - Stok ${product.stock}</div></div><div class="product-price">${money(product.price)}</div></div>`).join('') : '<div class="product-item">Barang tidak ditemukan</div>'; resultsBox.style.display = 'block'; }
         function addToCart(id) { const product = products.find(item => item.id === id); if (!product || product.stock < 1) return; const existing = cart.find(item => item.id === id); if (existing) { if (existing.qty < product.stock) existing.qty++; } else cart.push({ ...product, qty:1 }); searchInput.value = ''; resultsBox.style.display = 'none'; renderCart(); }
         function renderCart() { const body = document.querySelector('#cartBody'); if (!cart.length) { body.innerHTML = '<tr><td colspan="6" class="empty-cart"><i class="bi bi-basket2"></i>Keranjang masih kosong.<br>Silakan cari atau pilih barang.</td></tr>'; } else body.innerHTML = cart.map((item, index) => `<tr><td>${index + 1}</td><td><strong>${item.name}</strong><div class="product-meta">${item.category || 'Umum'}</div></td><td>${money(item.price)}</td><td><div class="qty-control"><button type="button" data-action="decrease" data-id="${item.id}">-</button><input type="number" min="1" max="${item.stock}" value="${item.qty}" data-action="quantity" data-id="${item.id}"><button type="button" data-action="increase" data-id="${item.id}">+</button></div></td><td class="text-right"><strong>${money(item.price * item.qty)}</strong></td><td><button class="remove-btn" type="button" data-action="remove" data-id="${item.id}">x</button></td></tr>`).join(''); calculateTotal(); }
-        function calculateTotal() { const quantity = cart.reduce((sum, item) => sum + item.qty, 0); const subtotal = cart.reduce((sum, item) => sum + item.price * item.qty, 0); document.querySelector('#totalQty').textContent = quantity; document.querySelector('#itemCount').textContent = `${quantity} Item`; document.querySelector('#subtotal').textContent = money(subtotal); document.querySelector('#grandTotal').textContent = money(totalValue()); if (currentPaymentMethod() === 'qris') paymentInput.value = totalValue(); calculateChange(); }
-        function calculateChange() { const difference = (Number(document.querySelector('#payment').value) || 0) - totalValue(); const box = document.querySelector('#changeBox'); const label = document.querySelector('#changeLabel'); box.classList.toggle('short-payment', difference < 0); label.textContent = difference < 0 ? 'UANG KURANG' : 'KEMBALIAN'; document.querySelector('#change').textContent = money(Math.abs(difference)); }
+        function calculateTotal() { const quantity = cart.reduce((sum, item) => sum + item.qty, 0); const subtotal = cart.reduce((sum, item) => sum + item.price * item.qty, 0); document.querySelector('#totalQty').textContent = quantity; document.querySelector('#itemCount').textContent = `${quantity} Item`; document.querySelector('#subtotal').textContent = money(subtotal); document.querySelector('#grandTotal').textContent = money(totalValue()); if (['qris', 'nfc'].includes(currentPaymentMethod())) paymentInput.value = totalValue(); calculateChange(); }
+        function calculateChange() {
+            const box = document.querySelector('#changeBox');
+            const label = document.querySelector('#changeLabel');
+            if (currentPaymentMethod() === 'nfc') {
+                const hasInsufficientBalance = nfcCardBalance !== null && nfcCardBalance < totalValue();
+                box.classList.toggle('short-payment', hasInsufficientBalance);
+                label.textContent = nfcCardBalance === null ? 'SALDO KARTU' : hasInsufficientBalance ? 'SALDO KURANG' : 'SALDO KARTU';
+                document.querySelector('#change').textContent = nfcCardBalance === null ? 'Belum dicek' : money(nfcCardBalance);
+                return;
+            }
+            const difference = (Number(paymentInput.value) || 0) - totalValue();
+            box.classList.toggle('short-payment', difference < 0);
+            label.textContent = difference < 0 ? 'UANG KURANG' : 'KEMBALIAN';
+            document.querySelector('#change').textContent = money(Math.abs(difference));
+        }
+        function setPaymentMethod(method) {
+            paymentButtons.forEach(button => button.classList.toggle('active', button.dataset.method === method));
+            const isQris = method === 'qris';
+            const isNfc = method === 'nfc';
+            paymentInput.readOnly = isQris || isNfc;
+            document.querySelector('#paymentLabel').textContent = isQris ? 'Nominal QRIS' : isNfc ? 'Dibayar dari saldo kartu' : 'Uang Dibayar';
+            nfcPaymentFields.hidden = !isNfc;
+            document.querySelector('#memberCustomerLabel').textContent = isNfc ? 'Member dari kartu NFC' : 'Pelanggan';
+            memberSelect.value = '';
+            memberSelect.options[0].textContent = isNfc ? 'Tempel kartu untuk mengenali member' : 'Pelanggan umum';
+            if (isNfc) {
+                nfcCardBalance = null;
+                nfcCardStatus.textContent = 'Tempel kartu atau masukkan UID untuk mengenali member.';
+            } else {
+                nfcCardUidInput.value = '';
+                nfcCardBalance = null;
+                nfcCardStatus.textContent = 'Kartu demo: DEMO-KARTU-001';
+            }
+            if (isQris || isNfc) paymentInput.value = totalValue();
+            calculateChange();
+        }
+        async function lookupNfcBalance(uid, statusElement = nfcCardStatus) {
+            const cardUid = uid.trim();
+            if (!cardUid) {
+                statusElement.textContent = 'Tempel kartu atau masukkan UID terlebih dahulu.';
+                return null;
+            }
+
+            statusElement.textContent = 'Memeriksa kartu...';
+            try {
+                const response = await fetch(@json(route('cashier.nfc.balance')), {
+                    method: 'POST',
+                    headers: {
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                    },
+                    body: JSON.stringify({ card_uid: cardUid })
+                });
+                const result = await response.json();
+                if (!response.ok) {
+                    throw new Error(Object.values(result.errors || {}).flat().join('\n') || result.message || 'UID kartu tidak valid.');
+                }
+
+                if (statusElement === nfcCardStatus) {
+                    if (currentPaymentMethod() !== 'nfc' || nfcCardUidInput.value.trim() !== cardUid) {
+                        return null;
+                    }
+                    nfcCardBalance = Number(result.balance);
+                    memberSelect.value = result.registered ? result.member_id || '' : '';
+                    memberSelect.options[0].textContent = result.registered
+                        ? 'Pilih member NFC'
+                        : 'Kartu belum terdaftar sebagai member';
+                    calculateChange();
+                }
+                statusElement.textContent = result.registered
+                    ? `Member ${result.member_name} · saldo ${money(result.balance)}`
+                    : 'Kartu belum terdaftar sebagai member. Daftarkan melalui menu Member NFC.';
+                return result;
+            } catch (error) {
+                statusElement.textContent = error.message || 'Saldo kartu gagal diperiksa.';
+                return null;
+            }
+        }
         searchInput.addEventListener('input', searchProduct); document.querySelector('#searchButton').addEventListener('click', searchProduct); paymentInput.addEventListener('input', calculateChange); document.querySelector('#otherFee').addEventListener('input', calculateTotal);
         resultsBox.addEventListener('click', event => { const item = event.target.closest('[data-product-id]'); if (item) addToCart(Number(item.dataset.productId)); });
         document.querySelector('#cartBody').addEventListener('click', event => { const button = event.target.closest('[data-action]'); if (!button) return; const item = cart.find(product => product.id === Number(button.dataset.id)); if (!item) return; if (button.dataset.action === 'increase') item.qty = Math.min(item.stock, item.qty + 1); if (button.dataset.action === 'decrease') item.qty--; if (button.dataset.action === 'remove' || item.qty < 1) cart = cart.filter(product => product.id !== item.id); renderCart(); });
         document.querySelector('#cartBody').addEventListener('change', event => { if (event.target.dataset.action !== 'quantity') return; const item = cart.find(product => product.id === Number(event.target.dataset.id)); if (item) item.qty = Math.max(1, Math.min(item.stock, Number(event.target.value) || 1)); renderCart(); });
         paymentButtons.forEach(button => button.addEventListener('click', () => {
-            paymentButtons.forEach(item => item.classList.remove('active'));
-            button.classList.add('active');
-            const isQris = button.dataset.method === 'qris';
-            paymentInput.readOnly = isQris;
-            document.querySelector('#paymentLabel').textContent = isQris ? 'Nominal QRIS' : 'Uang Dibayar';
-            if (isQris) paymentInput.value = totalValue();
-            calculateChange();
+            setPaymentMethod(button.dataset.method);
+            if (button.dataset.method === 'nfc') setTimeout(() => nfcCardUidInput.focus(), 100);
         }));
+        async function checkCurrentNfcCard() {
+            const result = await lookupNfcBalance(nfcCardUidInput.value);
+            if (result && !result.registered) {
+                alert('Kartu ini belum terdaftar sebagai member. Daftarkan pelanggan dan kartu melalui menu Member NFC, lalu isi saldonya.');
+            }
+        }
+        nfcCardUidInput.addEventListener('keydown', event => {
+            if (event.key === 'Enter') {
+                event.preventDefault();
+                checkCurrentNfcCard();
+            }
+        });
+        nfcCardUidInput.addEventListener('input', () => {
+            clearTimeout(nfcLookupTimeout);
+            nfcCardBalance = null;
+            memberSelect.value = '';
+            memberSelect.options[0].textContent = 'Tempel kartu untuk mengenali member';
+            nfcCardStatus.textContent = 'Membaca UID kartu...';
+            calculateChange();
+            if (currentPaymentMethod() === 'nfc' && nfcCardUidInput.value.trim()) {
+                nfcLookupTimeout = setTimeout(() => lookupNfcBalance(nfcCardUidInput.value), 350);
+            }
+        });
+        document.querySelector('#checkNfcBalanceButton').addEventListener('click', checkCurrentNfcCard);
+        document.querySelector('#useDemoCardButton').addEventListener('click', () => {
+            nfcCardUidInput.value = 'DEMO-KARTU-001';
+            checkCurrentNfcCard();
+        });
         document.querySelector('#cancelButton').addEventListener('click', () => {
             if (cart.length && !confirm('Batalkan transaksi ini?')) return;
             if (activeHeldTransactionId) {
@@ -624,17 +763,24 @@
             }
 
             const payment = Number(document.querySelector('#payment').value) || 0;
+            const paymentMethod = currentPaymentMethod();
 
-    if (!cart.length) {
-        return alert('Keranjang masih kosong.');
-    }
+            if (!cart.length) {
+                return alert('Keranjang masih kosong.');
+            }
 
-    if (payment < totalValue()) {
-        return alert('Uang pembayaran masih kurang.');
-    }
+            if (paymentMethod === 'nfc' && !nfcCardUidInput.value.trim()) {
+                return alert('Tempel kartu NFC atau masukkan UID kartu demo terlebih dahulu.');
+            }
+            if (paymentMethod === 'nfc' && nfcCardBalance !== null && nfcCardBalance < totalValue()) {
+                return alert('Saldo kartu NFC tidak mencukupi. Silakan isi saldo kartu demo.');
+            }
+            if (paymentMethod !== 'nfc' && payment < totalValue()) {
+                return alert('Uang pembayaran masih kurang.');
+            }
 
-    checkoutInProgress = true;
-    button.disabled = true;
+            checkoutInProgress = true;
+            button.disabled = true;
 
     try {
         const response = await fetch(@json(route('cashier.checkout')), {
@@ -656,7 +802,8 @@
                 tax: 0,
                 other_fee: Number(document.querySelector('#otherFee').value) || 0,
                 paid: payment,
-                payment_method: document.querySelector('.payment-method button.active').dataset.method
+                payment_method: paymentMethod,
+                card_uid: paymentMethod === 'nfc' ? nfcCardUidInput.value.trim() : null
             })
         });
 
@@ -679,6 +826,11 @@
         }
 
         completedCheckout = result;
+        if (paymentMethod === 'nfc' && result.card_balance !== null) {
+            nfcCardBalance = Number(result.card_balance);
+            nfcCardStatus.textContent = `Saldo member setelah transaksi · ${money(result.card_balance)}`;
+            calculateChange();
+        }
         document.querySelector('#receiptConfirmInvoice').textContent = result.invoice;
         document.querySelector('#receiptConfirmTotal').textContent = money(result.total);
         document.querySelector('#receiptConfirmChange').textContent = money(result.change);
@@ -705,14 +857,23 @@ document.querySelector('#payButton').addEventListener('click', event => {
     }
 
     const payment = Number(paymentInput.value) || 0;
+    const paymentMethod = currentPaymentMethod();
 
-    if (payment < totalValue()) {
+    if (paymentMethod !== 'nfc' && payment < totalValue()) {
         return alert('Uang pembayaran masih kurang.');
+    }
+    if (paymentMethod === 'nfc' && !nfcCardUidInput.value.trim()) {
+        return alert('Tempel kartu NFC atau masukkan UID kartu demo terlebih dahulu.');
+    }
+    if (paymentMethod === 'nfc' && nfcCardBalance !== null && nfcCardBalance < totalValue()) {
+        return alert('Saldo kartu NFC tidak mencukupi. Silakan isi saldo kartu demo.');
     }
 
     document.querySelector('#payConfirmItemCount').textContent = `${cart.reduce((sum, item) => sum + item.qty, 0)} item`;
     document.querySelector('#payConfirmTotal').textContent = money(totalValue());
     document.querySelector('#payConfirmPaid').textContent = money(payment);
+    document.querySelector('#payConfirmPaid').previousElementSibling.textContent = paymentMethod === 'nfc' ? 'Saldo kartu digunakan' : 'Uang dibayar';
+    document.querySelector('#payConfirmChange').parentElement.hidden = paymentMethod === 'nfc';
     document.querySelector('#payConfirmChange').textContent = money(Math.max(0, payment - totalValue()));
     payConfirmationModal.show();
 });
