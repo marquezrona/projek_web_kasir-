@@ -43,18 +43,53 @@
                 <option value="month" @selected($period === 'month')>Bulan ini</option>
                 <option value="year" @selected($period === 'year')>Tahun ini</option>
             </select>
+            <label class="visually-hidden" for="saleDate">Tanggal transaksi</label>
+            <input
+                class="form-control"
+                id="saleDate"
+                name="date"
+                type="date"
+                value="{{ $date }}"
+                aria-label="Tanggal transaksi"
+                style="max-width: 170px"
+            >
+            <label class="visually-hidden" for="saleMonth">Bulan transaksi</label>
+            <select class="form-select" id="saleMonth" name="month" aria-label="Bulan transaksi" style="max-width: 150px">
+                <option value="">Semua bulan</option>
+                @foreach ([
+                    1 => 'Januari', 2 => 'Februari', 3 => 'Maret', 4 => 'April',
+                    5 => 'Mei', 6 => 'Juni', 7 => 'Juli', 8 => 'Agustus',
+                    9 => 'September', 10 => 'Oktober', 11 => 'November', 12 => 'Desember',
+                ] as $monthNumber => $monthName)
+                    <option value="{{ $monthNumber }}" @selected((string) $month === (string) $monthNumber)>{{ $monthName }}</option>
+                @endforeach
+            </select>
+            <label class="visually-hidden" for="saleYear">Tahun transaksi</label>
+            <input
+                class="form-control"
+                id="saleYear"
+                name="year"
+                type="number"
+                min="1900"
+                max="9999"
+                value="{{ $year }}"
+                placeholder="Tahun"
+                aria-label="Tahun transaksi"
+                style="max-width: 120px"
+            >
             <button class="btn btn-primary" type="submit">
                 <i class="bi bi-funnel me-1" aria-hidden="true"></i>Terapkan
             </button>
-            @if($search !== '' || $period !== 'all')
+            @if($search !== '' || $period !== 'all' || $date !== '' || $month !== '' || $year !== '')
                 <a class="btn btn-outline-secondary" href="{{ route('cashier.riwayat') }}">Reset</a>
             @endif
         </form>
+        <p class="small text-muted px-3 mb-3">Filter tanggal, bulan, dan tahun dapat digunakan bersama. Jika diisi, filter tersebut menggantikan pilihan periode di atas.</p>
 
         @if($sales->isEmpty())
             <div class="p-5 text-center text-muted">
                 <i class="bi bi-receipt d-block mb-2 fs-3"></i>
-                {{ $search !== '' || $period !== 'all' ? 'Transaksi tidak ditemukan. Coba kata kunci atau periode lain.' : 'Belum ada transaksi yang tersimpan.' }}
+                {{ $search !== '' || $period !== 'all' || $date !== '' || $month !== '' || $year !== '' ? 'Transaksi tidak ditemukan. Coba kata kunci atau periode lain.' : 'Belum ada transaksi yang tersimpan.' }}
             </div>
         @else
             <div class="table-responsive">

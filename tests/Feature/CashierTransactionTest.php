@@ -644,6 +644,36 @@ class CashierTransactionTest extends TestCase
         }
     }
 
+    public function test_cashier_history_can_be_filtered_by_specific_date_month_and_year(): void
+    {
+        $this->travelTo(Carbon::parse('2026-10-05 12:00:00'));
+        $cashier = User::factory()->create(['role' => 'kasir']);
+        $this->createReportSale($cashier, 'INV-OCT-2026', 1000, Carbon::parse('2026-10-05 09:00:00'));
+        $this->createReportSale($cashier, 'INV-SEP-2026', 1000, Carbon::parse('2026-09-05 09:00:00'));
+        $this->createReportSale($cashier, 'INV-OCT-2025', 1000, Carbon::parse('2025-10-05 09:00:00'));
+
+        $this->actingAs($cashier)
+            ->get(route('cashier.riwayat', ['date' => '2025-10-05']))
+            ->assertOk()
+            ->assertSee('INV-OCT-2025')
+            ->assertDontSee('INV-OCT-2026')
+            ->assertDontSee('INV-SEP-2026');
+
+        $this->actingAs($cashier)
+            ->get(route('cashier.riwayat', ['month' => 9, 'year' => 2026, 'period' => 'year']))
+            ->assertOk()
+            ->assertSee('INV-SEP-2026')
+            ->assertDontSee('INV-OCT-2026')
+            ->assertDontSee('INV-OCT-2025');
+
+        $this->actingAs($cashier)
+            ->get(route('cashier.riwayat', ['year' => 2025]))
+            ->assertOk()
+            ->assertSee('INV-OCT-2025')
+            ->assertDontSee('INV-OCT-2026')
+            ->assertDontSee('INV-SEP-2026');
+    }
+
     public function test_admin_sales_report_uses_saved_transactions_from_all_cashiers(): void
     {
         $this->travelTo(Carbon::parse('2026-10-09 12:00:00'));

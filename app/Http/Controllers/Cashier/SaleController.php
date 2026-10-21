@@ -40,14 +40,21 @@ class SaleController extends Controller
         $validated = $request->validate([
             'search' => ['nullable', 'string', 'max:100'],
             'period' => ['nullable', 'in:all,day,week,month,year'],
+            'date' => ['nullable', 'date_format:Y-m-d'],
+            'month' => ['nullable', 'integer', 'between:1,12'],
+            'year' => ['nullable', 'integer', 'between:1900,9999'],
         ]);
         $search = trim($validated['search'] ?? '');
         $period = $validated['period'] ?? 'all';
+        $date = $validated['date'] ?? '';
+        $month = $validated['month'] ?? '';
+        $year = $validated['year'] ?? '';
+        $hasCalendarFilter = $date !== '' || $month !== '' || $year !== '';
 
         $sales = Sale::query()
             ->with(['items', 'customer'])
             ->where('cashier_id', $request->user()->id)
-            ->when($period !== 'all', function ($query) use ($period) {
+            ->when($period !== 'all' && ! $hasCalendarFilter, function ($query) use ($period) {
                 $now = now();
                 $start = match ($period) {
                     'day' => $now->copy()->startOfDay(),
@@ -64,6 +71,9 @@ class SaleController extends Controller
 
                 $query->whereBetween('created_at', [$start, $end]);
             })
+            ->when($date !== '', fn ($query) => $query->whereDate('created_at', $date))
+            ->when($month !== '', fn ($query) => $query->whereMonth('created_at', $month))
+            ->when($year !== '', fn ($query) => $query->whereYear('created_at', $year))
             ->when($search !== '', function ($query) use ($search) {
                 $query->where(function ($query) use ($search) {
                     $query->where('invoice', 'like', "%{$search}%")
@@ -79,7 +89,7 @@ class SaleController extends Controller
             ->paginate(15)
             ->withQueryString();
 
-        return view('cashier.riwayat', compact('sales', 'search', 'period'));
+        return view('cashier.riwayat', compact('sales', 'search', 'period', 'date', 'month', 'year'));
     }
 
     public function store(Request $request): JsonResponse
